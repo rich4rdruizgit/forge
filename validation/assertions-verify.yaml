@@ -1,0 +1,224 @@
+# Assertions for VERIFY
+# Forge v0.4 Validation System
+# Reorganized by the 5 Pillars (P1-P5)
+# ID format: P{pillar}-VERIFY-{NNN}
+
+phase: verify
+
+# ─────────────────────────────────────────────
+# P1 — Problema de Negocio
+# ¿Cada AC tiene evidencia y el DoD está cumplido?
+# ─────────────────────────────────────────────
+pillars:
+  - pillar: P1
+    name: Problema de Negocio
+    assertions:
+      - id: P1-VERIFY-001
+        pillar: P1
+        description: "Cada AC tiene evidencia de cumplimiento"
+        severity: blocker
+        verification: |
+          VERIFY.md contiene tabla donde cada AC-N tiene: test_id, impl_file
+          y status "Completo". Ningún AC tiene status "Pendiente" o vacío.
+        evidence_hint: "ACs con status en VERIFY.md"
+
+      - id: P1-VERIFY-002
+        pillar: P1
+        description: "Definition of Done completamente cumplida"
+        severity: blocker
+        verification: |
+          Cada criterio de la Sección 6 (DoD) de la SPEC está marcado como cumplido
+          en VERIFY.md. No hay criterios parciales ni omitidos.
+        evidence_hint: "Criterios de DoD cumplidos vs total"
+
+  # ─────────────────────────────────────────────
+  # P2 — Consistencia Arquitectónica
+  # ¿El código implementado sigue los patrones de KNOWLEDGE.md?
+  # ─────────────────────────────────────────────
+  - pillar: P2
+    name: Consistencia Arquitectónica
+    assertions:
+      - id: P2-VERIFY-001
+        pillar: P2
+        description: "Código sigue patrones documentados en KNOWLEDGE.md"
+        severity: blocker
+        verification: |
+          La implementación real sigue los patrones de arquitectura referenciados
+          en la SPEC (Sección 10). Si hubo desviaciones durante GREEN, están
+          documentadas con justificación en VERIFY.md o en un addenda de la SPEC.
+        evidence_hint: "Patrones seguidos vs documentados en SPEC"
+
+  # ─────────────────────────────────────────────
+  # P3 — Tests de Comportamiento Real
+  # ¿Todos los tests pasan y no hay regresiones?
+  # ─────────────────────────────────────────────
+  - pillar: P3
+    name: Tests de Comportamiento Real
+    assertions:
+      - id: P3-VERIFY-001
+        pillar: P3
+        description: "Suite completa de tests pasa (no solo los tests nuevos)"
+        severity: blocker
+        verification: |
+          La suite completa del proyecto (incluyendo tests de features previas)
+          está en verde. Tests pasando = Tests totales. 0 regresiones.
+        evidence_hint: "Pass rate de la suite completa"
+
+      - id: P3-VERIFY-002
+        pillar: P3
+        description: "0 regresiones en features existentes"
+        severity: blocker
+        verification: |
+          Tests de features previas que pasaban antes del BUILD siguen pasando.
+          Si algún test anterior falla, hay justificación documentada de que
+          el cambio de comportamiento era intencional y aprobado.
+        evidence_hint: "Tests previos que pasaban antes vs ahora"
+
+      - id: P3-VERIFY-003
+        pillar: P3
+        description: "Cero gaps: todos los ACs tienen test + implementación"
+        severity: blocker
+        verification: |
+          Tablas de gaps en VERIFY.md están vacías (solo headers, sin datos).
+          No hay ACs sin test, no hay ACs sin implementación, no hay tests sin AC.
+        evidence_hint: "Número de gaps por categoría"
+
+  # ─────────────────────────────────────────────
+  # P4 — Integración con lo Existente
+  # ¿Los componentes reutilizables se reutilizaron realmente?
+  # ─────────────────────────────────────────────
+  - pillar: P4
+    name: Integración con lo Existente
+    assertions:
+      - id: P4-VERIFY-001
+        pillar: P4
+        description: "Componentes marcados como reutilizables en Sección 5a fueron reutilizados"
+        severity: blocker
+        verification: |
+          Cada componente listado en la Sección 5a de la SPEC aparece efectivamente
+          en los archivos de implementación (IMPL_FILES en TRACEABILITY.md).
+          Si no se reutilizó algo planificado, hay justificación documentada.
+        evidence_hint: "Componentes de 5a vs IMPL_FILES reales"
+
+  # ─────────────────────────────────────────────
+  # P5 — Trazabilidad
+  # ¿Podemos trazar AC → Test → Implementación?
+  # ─────────────────────────────────────────────
+  - pillar: P5
+    name: Trazabilidad
+    assertions:
+      - id: P5-VERIFY-001
+        pillar: P5
+        description: "Cadena de trazabilidad completa: AC → Test → Implementación"
+        severity: blocker
+        verification: |
+          Para cada AC en TRACEABILITY.md: AC_ID tiene TEST_IDS asociados,
+          TEST_IDS tienen IMPL_FILES asociados, y IMPL_FILES existen en el repositorio.
+          La cadena no tiene ningún eslabón roto.
+        evidence_hint: "Coverage Matrix con cadena completa"
+
+      - id: P5-VERIFY-002
+        pillar: P5
+        description: "TRACEABILITY.md completamente lleno"
+        severity: blocker
+        verification: |
+          Todas las columnas de cada fila en TRACEABILITY.md tienen contenido.
+          No hay celdas vacías para ACs activos de esta feature.
+        evidence_hint: "Filas completas en TRACEABILITY.md"
+
+# ─────────────────────────────────────────────
+# Bloques Condicionales
+# Se activan según contenido de la SPEC
+# ─────────────────────────────────────────────
+conditionals:
+
+  when_ui_present:
+    description: "SPEC tiene sección 'Estados de UI' (sección 8) con contenido"
+    assertions:
+      - id: P3-VERIFY-UI-001
+        pillar: P3
+        description: "Todos los estados de UI tienen tests que pasan"
+        severity: blocker
+        verification: |
+          Para cada pantalla en Sección 8 de la SPEC: todos los estados
+          (loading, error, empty, success, etc.) tienen tests en verde.
+          No hay estados sin cobertura de test.
+        evidence_hint: "Estados por pantalla con tests pasando"
+
+      - id: P1-VERIFY-UI-001
+        pillar: P1
+        description: "Comportamiento de UI observable coincide con ACs"
+        severity: blocker
+        verification: |
+          Lo que el usuario realmente ve en cada estado corresponde exactamente
+          a lo descrito en los ACs de la SPEC. No hay estados adicionales
+          no documentados ni comportamientos faltantes.
+        evidence_hint: "ACs de UI vs comportamiento real observado"
+
+  when_api_present:
+    description: "SPEC tiene sección 'Contrato de API' (sección 12) con contenido"
+    assertions:
+      - id: P3-VERIFY-API-001
+        pillar: P3
+        description: "Escenarios de error del API verificados con tests que pasan"
+        severity: blocker
+        verification: |
+          Tests de errores de API (4xx, 5xx, timeout, sin red) están en verde.
+          Cada escenario de error del Contrato de API tiene evidencia de test pasando.
+        evidence_hint: "Tests de errores de API en verde"
+
+      - id: P2-VERIFY-API-001
+        pillar: P2
+        description: "Implementación cumple el Contrato de API documentado"
+        severity: blocker
+        verification: |
+          El endpoint, método, request y response implementados coinciden
+          con el Contrato de API de Sección 12. Si hubo cambios al contrato,
+          están documentados como addenda aprobada.
+        evidence_hint: "Contrato de API documentado vs implementado"
+
+  when_bug:
+    description: "HU contiene: bug, fix, corregir, error, defecto"
+    assertions:
+      - id: P3-VERIFY-BUG-001
+        pillar: P3
+        description: "Test de regresión del bug pasa permanentemente"
+        severity: blocker
+        verification: |
+          El test de reproducción del bug (escrito en RED) está en verde.
+          El test está marcado como test de regresión en TRACEABILITY.md
+          y NO puede ser ignorado o eliminado en el futuro sin aprobación.
+        evidence_hint: "Test de regresión en verde con marca permanente"
+
+      - id: P1-VERIFY-BUG-001
+        pillar: P1
+        description: "Comportamiento corregido coincide exactamente con el AC de fix"
+        severity: blocker
+        verification: |
+          El AC que describe el comportamiento correcto (post-fix) puede
+          verificarse manualmente o con el test. La causa raíz documentada
+          en la SPEC está efectivamente resuelta.
+        evidence_hint: "AC de fix cumplido y causa raíz resuelta"
+
+  when_metrics:
+    description: "HU contiene: métrica, analytics, evento, tracking"
+    assertions:
+      - id: P3-VERIFY-MET-001
+        pillar: P3
+        description: "Eventos de analytics verificados con tests que pasan"
+        severity: blocker
+        verification: |
+          Los tests de disparo de eventos de tracking están en verde.
+          Cada evento documentado en los ACs tiene evidencia de test pasando
+          con las propiedades correctas.
+        evidence_hint: "Tests de eventos de analytics en verde"
+
+      - id: P1-VERIFY-MET-001
+        pillar: P1
+        description: "Eventos disparados coinciden con los ACs de analytics"
+        severity: blocker
+        verification: |
+          Los eventos que efectivamente se disparan (nombre, propiedades, trigger)
+          coinciden con los documentados en los ACs. No hay eventos extras
+          no documentados ni eventos faltantes.
+        evidence_hint: "Eventos documentados en ACs vs implementados"

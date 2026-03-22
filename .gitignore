@@ -1,0 +1,23 @@
+# Active feature cycles — local only, not committed
+forge/features/activo/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node (if CLI is built with Node)
+node_modules/
+npm-debug.log*
+
+# Go (if CLI is built with Go)
+/bin/
+*.exe
+
+# Logs
+*.log

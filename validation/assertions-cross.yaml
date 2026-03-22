@@ -1,0 +1,75 @@
+# Cross-Phase Assertions
+# Forge v0.3 Validation System
+
+phase: cross
+description: >
+  Assertions de consistencia entre fases.
+  Se ejecutan cuando hay al menos 2 fases aprobadas.
+assertions:
+  - id: P1-CROSS-001
+    description: "Cada AC de SPEC tiene test en BUILD"
+    severity: blocker
+    verification: |
+      Para cada AC-N de SPEC.md: verificar que aparece en
+      Coverage Matrix de TRACEABILITY.md con TEST_ID.
+    evidence_hint: "ACs con tests"
+    requires_phases: [SPEC, BUILD]
+
+  - id: P1-CROSS-002
+    description: "Cada evento de SPEC tiene test en BUILD"
+    severity: blocker
+    verification: |
+      Para cada evento de SPEC.md: verificar en Coverage Matrix
+      con TEST_ID.
+    evidence_hint: "Eventos con tests"
+    requires_phases: [SPEC, BUILD]
+
+  - id: P1-CROSS-003
+    description: "Cada estado UI de SPEC tiene test en BUILD"
+    severity: blocker
+    verification: |
+      Para cada estado en UI Contract: verificar UI test en
+      Coverage Matrix o VERIFY.md.
+    evidence_hint: "UI estados con tests"
+    requires_phases: [SPEC, BUILD]
+
+  - id: P5-CROSS-001
+    description: "No hay tests sin AC"
+    severity: warning
+    verification: |
+      Cada test en Coverage Matrix tiene AC_ID válido.
+    evidence_hint: "Tests huérfanos"
+    requires_phases: [SPEC, BUILD]
+
+  - id: P5-CROSS-002
+    description: "No hay eventos sin tests"
+    severity: warning
+    verification: |
+      Cada evento de SPEC aparece en Coverage Matrix.
+    evidence_hint: "Eventos sin tests"
+    requires_phases: [SPEC, BUILD]
+
+  - id: P5-CROSS-003
+    description: "Cadena completa AC→Evento→Test→Impl"
+    severity: blocker
+    verification: |
+      Para cada AC: evento + test + impl. Gaps = FAIL.
+    evidence_hint: "ACs con cadena completa vs gaps"
+    requires_phases: [SPEC, BUILD]
+
+  - id: P2-CROSS-001
+    description: "Decisiones de SPIKE reflejadas en SPEC"
+    severity: warning
+    verification: |
+      Si SPIKE existe: verificar que la opción elegida aparece
+      como decisión en SPEC §4 Decisions.
+    evidence_hint: "Decisión de SPIKE en SPEC"
+    requires_phases: [SPIKE, SPEC]
+
+  - id: P1-CROSS-004
+    description: "VERIFY cubre todos los ACs de SPEC"
+    severity: blocker
+    verification: |
+      Cada AC de SPEC.md aparece en VERIFY.md con status Completo.
+    evidence_hint: "ACs verificados"
+    requires_phases: [SPEC, VERIFY]

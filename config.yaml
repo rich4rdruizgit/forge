@@ -1,0 +1,42 @@
+# Forge Configuration
+# Editar según el proyecto y el equipo
+
+forge_version: v0.4
+
+proyecto:
+  nombre: "Mi Proyecto"
+  descripcion: "Descripción breve del proyecto"
+
+stack:
+  plataforma: android          # android | kmp | {custom}
+  lenguaje: kotlin             # kotlin
+  arquitectura: clean+mvvm     # clean+mvvm
+  di: hilt                     # hilt | koin | manual
+  async: coroutines            # coroutines | rxjava
+
+modelos:
+  default: claude-sonnet-4-6   # Para SPEC, BUILD, VERIFY, Guardian
+  architect: claude-opus-4-6   # Solo para SPEC §2-§3 (domain model + architecture)
+  fallback: gemini-2.0-flash   # Si no hay API key de Anthropic
+
+ciclo:
+  idioma: español              # español | english
+  fragmentar_en_puntos: 5      # Si story points > N, sugerir fragmentación
+  umbral_fragmentacion: 8
+  commits_convencionales: true
+  requiere_aprobacion: true    # El dev debe aprobar cada fase antes de avanzar
+
+validacion:
+  assertions_dir: validation/     # directorio con assertion YAMLs
+  spec_score_minimo: 7
+  max_iteraciones: 3              # máximo de draft→validate→rewrite por fase
+  warnings_son_blockers: false    # si true, warnings también bloquean aprobación
+
+memoria:
+  knowledge_file: KNOWLEDGE.md
+  auto_extract_on_close: true
+  max_knowledge_entries: 200
+
+equipo:
+  azure_organization: ""       # URL de tu Azure DevOps
+  azure_project: ""

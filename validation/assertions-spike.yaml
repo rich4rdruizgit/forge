@@ -1,0 +1,49 @@
+# Assertions for SPIKE
+# Forge v0.3 Validation System
+
+phase: spike
+assertions:
+  - id: SPIKE_QUESTION
+    description: "Pregunta técnica específica definida"
+    severity: blocker
+    verification: |
+      Buscar sección 'Pregunta a resolver' con contenido real (no placeholder).
+      Debe ser UNA pregunta concreta, no un párrafo genérico.
+    evidence_hint: "Texto de la pregunta"
+
+  - id: SPIKE_OPTIONS
+    description: "Al menos 2 opciones evaluadas"
+    severity: blocker
+    verification: |
+      Contar subsecciones bajo 'Hallazgos' con tabla de evaluación
+      (Viabilidad + Esfuerzo). Count >= 2.
+      Excepción: si solo 1, debe haber justificación explícita.
+    evidence_hint: "Opciones con viabilidad"
+
+  - id: SPIKE_DECISION
+    description: "Decisión con razonamiento"
+    severity: blocker
+    verification: |
+      Sección 'Decisión' con 'Opción elegida' y 'Razonamiento' no vacíos.
+    evidence_hint: "Opción y razonamiento"
+
+  - id: SPIKE_SPEC_IMPACT
+    description: "Impacto en SPEC declarado"
+    severity: blocker
+    verification: |
+      Campo 'Impacto en SPEC' con contenido real.
+    evidence_hint: "Texto del impacto"
+
+  - id: SPIKE_TIMEBOX
+    description: "Time-box definido"
+    severity: warning
+    verification: |
+      Campo 'Time-box' en header con valor numérico.
+    evidence_hint: "Valor time-box"
+
+  - id: SPIKE_RISKS
+    description: "Riesgos residuales documentados"
+    severity: warning
+    verification: |
+      Tabla Riesgos residuales con >= 1 fila o declaración de ausencia.
+    evidence_hint: "Primer riesgo"

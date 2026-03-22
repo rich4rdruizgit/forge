@@ -1,0 +1,356 @@
+# Assertions for BUILD
+# Forge v0.4 Validation System
+# Reorganized by the 5 Pillars (P1-P5)
+# ID format: P{pillar}-BUILD-{NNN}
+#
+# BUILD has two internal phases:
+#   phase: auto-gate  → runs automatically between RED and GREEN (blocking)
+#   phase: build      → runs during full BUILD validation
+
+phase: build
+
+# ─────────────────────────────────────────────
+# AUTO-GATE ASSERTIONS
+# Run automatically after RED phase.
+# Gate FAILS → agent BLOCKS and reports what is missing.
+# Gate PASSES → show summary to dev, proceed to GREEN.
+# ─────────────────────────────────────────────
+auto_gate:
+  description: "Automatic gate between RED and GREEN phases"
+  assertions:
+    - id: P3-BUILD-AG-001
+      pillar: P3
+      description: "Cada AC tiene al menos 1 test"
+      severity: blocker
+      phase: auto-gate
+      verification: |
+        Para cada AC-N de la SPEC: existe al menos un test que lo cubre.
+        El nombre del test o un comentario referencia el AC explícitamente.
+      evidence_hint: "ACs y sus tests correspondientes"
+
+    - id: P3-BUILD-AG-002
+      pillar: P3
+      description: "Cada test verifica comportamiento, no implementación"
+      severity: blocker
+      phase: auto-gate
+      verification: |
+        Los tests afirman resultados observables (estado del sistema, valores retornados,
+        eventos emitidos), no que ciertos métodos fueron llamados con ciertos parámetros.
+        Los tests no acoplan al nombre de clases internas ni al orden de llamadas privadas.
+      evidence_hint: "Assertions de tests (comportamiento vs implementación)"
+
+    - id: P3-BUILD-AG-003
+      pillar: P3
+      description: "Escenarios de error de la SPEC tienen tests"
+      severity: blocker
+      phase: auto-gate
+      verification: |
+        Cada caso borde y escenario de error documentado en la SPEC (sección 4
+        y condicionales) tiene al menos un test. No hay happy-path-only.
+      evidence_hint: "Casos borde con tests"
+
+    - id: P3-BUILD-AG-004
+      pillar: P3
+      description: "0 tests mockean más de 2 capas"
+      severity: blocker
+      phase: auto-gate
+      verification: |
+        Ningún test configura mocks de más de 2 capas simultáneamente.
+        Ejemplo de violación: mockear Repository + UseCase + ViewModel en el mismo test.
+        Tests con mock depth > 2 prueban infraestructura de mocks, no comportamiento.
+      evidence_hint: "Mock depth de cada test"
+
+# ─────────────────────────────────────────────
+# P1 — Problema de Negocio
+# ¿Los tests validan lo que pide el ticket?
+# ─────────────────────────────────────────────
+pillars:
+  - pillar: P1
+    name: Problema de Negocio
+    assertions:
+      - id: P1-BUILD-001
+        pillar: P1
+        description: "Cada AC tiene al menos 1 test (validación build completa)"
+        severity: blocker
+        verification: |
+          Coverage Matrix en TRACEABILITY.md: columna TEST_IDS no vacía
+          para ningún AC. Cada AC del SPEC está representado.
+        evidence_hint: "ACs con TEST_IDS en Coverage Matrix"
+
+  # ─────────────────────────────────────────────
+  # P2 — Consistencia Arquitectónica
+  # ¿Los tests y el código siguen las convenciones del proyecto?
+  # ─────────────────────────────────────────────
+  - pillar: P2
+    name: Consistencia Arquitectónica
+    assertions:
+      - id: P2-BUILD-001
+        pillar: P2
+        description: "Tests siguen las naming conventions del stack"
+        severity: warning
+        verification: |
+          >= 80% de los tests siguen el patrón de naming documentado
+          en el skill del stack (JUnit5 + MockK: methodName_condition_expectedResult
+          o equivalente establecido en KNOWLEDGE.md).
+        evidence_hint: "Ratio de tests con naming correcto"
+
+      - id: P2-BUILD-002
+        pillar: P2
+        description: "Sin patrones nuevos no justificados"
+        severity: blocker
+        verification: |
+          La implementación no introduce patrones arquitectónicos que no estén
+          en KNOWLEDGE.md o que no tengan justificación documentada en la SPEC
+          (Sección 10 - Decisiones Técnicas).
+        evidence_hint: "Nuevos patrones introducidos vs KNOWLEDGE.md"
+
+      - id: P2-BUILD-003
+        pillar: P2
+        description: "Archivos implementados coinciden con los listados en SPEC"
+        severity: blocker
+        verification: |
+          Los archivos creados/modificados están en Sección 5b (Componentes Nuevos)
+          o Sección 5a (Componentes Reutilizados) de la SPEC, o en un addenda aprobado.
+          No hay archivos "extra" no planificados.
+        evidence_hint: "Archivos implementados vs SPEC Architecture"
+
+  # ─────────────────────────────────────────────
+  # P3 — Tests de Comportamiento Real
+  # ¿Los tests prueban comportamiento real?
+  # ─────────────────────────────────────────────
+  - pillar: P3
+    name: Tests de Comportamiento Real
+    assertions:
+      - id: P3-BUILD-001
+        pillar: P3
+        description: "Tests verifican COMPORTAMIENTO, no implementación"
+        severity: blocker
+        verification: |
+          Los tests usan assertions sobre el resultado observable del sistema.
+          No usan verify() sobre métodos privados ni acoplan al orden de llamadas.
+          Si se cambia el nombre de una clase interna sin cambiar comportamiento,
+          los tests NO deben romperse.
+        evidence_hint: "Tipo de assertions en tests"
+
+      - id: P3-BUILD-002
+        pillar: P3
+        description: "El sujeto bajo test no es mockeado"
+        severity: blocker
+        verification: |
+          La clase/función que está siendo testeada no aparece como mock
+          en su propio test. Solo se mockean las dependencias externas al sujeto.
+        evidence_hint: "Identificación del sujeto y sus mocks"
+
+      - id: P3-BUILD-003
+        pillar: P3
+        description: "Tests son autocontenidos"
+        severity: blocker
+        verification: |
+          Cada test puede ejecutarse de forma aislada sin depender del orden
+          de ejecución ni del estado dejado por otro test. No hay estado compartido
+          mutable entre tests.
+        evidence_hint: "Dependencias entre tests"
+
+      - id: P3-BUILD-004
+        pillar: P3
+        description: "Tests rompen ante cambio de comportamiento, no de implementación"
+        severity: blocker
+        verification: |
+          Si se refactoriza internamente sin cambiar el comportamiento observable,
+          los tests deben seguir pasando. Si los tests solo validan rutas de código
+          internas, fallarán en refactors seguros.
+        evidence_hint: "Naturaleza de las assertions"
+
+      - id: P3-BUILD-005
+        pillar: P3
+        description: "Todos los tests pasan (suite completa green)"
+        severity: blocker
+        verification: |
+          La suite completa del proyecto (no solo los tests nuevos) está en verde.
+          0 tests fallando, 0 tests en error.
+        evidence_hint: "Resultado de la suite completa"
+
+      - id: P3-BUILD-006
+        pillar: P3
+        description: "Sin tests ignorados (@Ignore, @Disabled, skip)"
+        severity: blocker
+        verification: |
+          Ningún test nuevo tiene anotación @Ignore, @Disabled o equivalente.
+          Tests ignorados en la suite existente: documentar razón en TRACEABILITY.md.
+        evidence_hint: "Tests con @Ignore o @Disabled"
+
+  # ─────────────────────────────────────────────
+  # P4 — Integración con lo Existente
+  # ¿El código nuevo no duplica ni rompe lo que ya existe?
+  # ─────────────────────────────────────────────
+  - pillar: P4
+    name: Integración con lo Existente
+    assertions:
+      - id: P4-BUILD-001
+        pillar: P4
+        description: "Sin utilidades duplicadas"
+        severity: blocker
+        verification: |
+          No se crearon funciones, extensiones o helpers que ya existen
+          en el proyecto con el mismo propósito. Se reutilizaron los existentes.
+        evidence_hint: "Utilities nuevos vs existentes"
+
+      - id: P4-BUILD-002
+        pillar: P4
+        description: "Usa la infraestructura de tests existente"
+        severity: warning
+        verification: |
+          Los tests nuevos usan las clases base, factories, fakes y builders
+          ya establecidos en el proyecto. No se re-implementó infraestructura de tests.
+        evidence_hint: "Infraestructura de tests reutilizada"
+
+      - id: P4-BUILD-003
+        pillar: P4
+        description: "Sin TODOs sin resolver en código nuevo"
+        severity: blocker
+        verification: |
+          El código nuevo no tiene comentarios TODO, FIXME o HACK sin resolución
+          documentada. Si hay un TODO válido, debe tener ticket de Azure DevOps.
+        evidence_hint: "TODOs en código nuevo"
+
+  # ─────────────────────────────────────────────
+  # P5 — Trazabilidad
+  # ¿Cada test referencia su AC?
+  # ─────────────────────────────────────────────
+  - pillar: P5
+    name: Trazabilidad
+    assertions:
+      - id: P5-BUILD-001
+        pillar: P5
+        description: "Nombres de tests referencian el AC"
+        severity: warning
+        verification: |
+          El nombre del test o un comentario @DisplayName / @Test incluye
+          la referencia al AC (ej: "AC-3: dado usuario sin conexión...").
+          Facilita trazar fallas a requisitos de negocio.
+        evidence_hint: "Nombres de tests con referencia a AC"
+
+      - id: P5-BUILD-002
+        pillar: P5
+        description: "Coverage Matrix completa en TRACEABILITY.md"
+        severity: blocker
+        verification: |
+          TRACEABILITY.md contiene tabla con columnas: AC_ID, TEST_IDS, IMPL_FILES,
+          STATUS. Ninguna columna vacía para ACs activos.
+        evidence_hint: "Dimensiones de Coverage Matrix"
+
+# ─────────────────────────────────────────────
+# Bloques Condicionales
+# Se activan según contenido de la SPEC
+# ─────────────────────────────────────────────
+conditionals:
+
+  when_ui_present:
+    description: "SPEC tiene sección 'Estados de UI' (sección 8) con contenido"
+    assertions:
+      - id: P3-BUILD-UI-001
+        pillar: P3
+        description: "Tests de UI cubren cada estado de pantalla"
+        severity: blocker
+        verification: |
+          Para cada pantalla en Sección 8 de la SPEC: hay >= 1 test por estado
+          (loading, error, empty, success, etc.). Los tests usan TestTags definidos
+          en la SPEC para localizar elementos de UI.
+        evidence_hint: "Estados con UI tests"
+
+      - id: P3-BUILD-UI-002
+        pillar: P3
+        description: "Tests de UI verifican estados visibles, no lógica interna"
+        severity: blocker
+        verification: |
+          Los UI tests afirman que ciertos elementos son visibles/ocultos/habilitados,
+          no que el ViewModel está en cierto estado interno.
+        evidence_hint: "Assertions de UI tests"
+
+  when_api_present:
+    description: "SPEC tiene sección 'Contrato de API' (sección 12) con contenido"
+    assertions:
+      - id: P3-BUILD-API-001
+        pillar: P3
+        description: "Tests de error del API cubren escenarios de la SPEC"
+        severity: blocker
+        verification: |
+          Hay tests para: 4xx del servidor, 5xx del servidor, timeout, sin red.
+          Cada error documentado en la SPEC tiene test correspondiente.
+        evidence_hint: "Tests de error de API"
+
+      - id: P3-BUILD-API-002
+        pillar: P3
+        description: "JSON de tests es realista (no {}, null, o placeholders)"
+        severity: warning
+        verification: |
+          Los fixtures JSON usados en tests tienen estructura y valores similares
+          a los del contrato de API. No usan objetos vacíos ni strings "test".
+        evidence_hint: "Fixtures JSON en tests"
+
+      - id: P4-BUILD-API-001
+        pillar: P4
+        description: "Usa la capa de red existente del proyecto"
+        severity: blocker
+        verification: |
+          La implementación usa el cliente HTTP, interceptors y manejo de errores
+          ya establecido en el proyecto. No creó una nueva capa de red paralela.
+        evidence_hint: "Capa de red utilizada"
+
+  when_domain_present:
+    description: "SPEC tiene sección 'Modelo de Dominio' (sección 7) con contenido"
+    assertions:
+      - id: P3-BUILD-DOM-001
+        pillar: P3
+        description: "Casos de uso tienen tests de comportamiento"
+        severity: blocker
+        verification: |
+          Cada use case del Modelo de Dominio tiene tests que verifican
+          su comportamiento: qué retorna dado cierto input, qué evento emite,
+          qué excepción lanza ante invariante violada.
+        evidence_hint: "Tests de use cases"
+
+      - id: P3-BUILD-DOM-002
+        pillar: P3
+        description: "Invariantes del dominio tienen tests de violación"
+        severity: blocker
+        verification: |
+          Cada invariante del Modelo de Dominio tiene al menos un test que verifica
+          que el sistema rechaza correctamente inputs que la violan.
+        evidence_hint: "Tests de invariantes"
+
+  when_bug:
+    description: "HU contiene: bug, fix, corregir, error, defecto"
+    assertions:
+      - id: P3-BUILD-BUG-001
+        pillar: P3
+        description: "Test de reproducción del bug existe y estaba en RED"
+        severity: blocker
+        verification: |
+          El test que reproduce el bug fue escrito en la fase RED (antes de la fix).
+          El TRACEABILITY.md checkpoint confirma que el test fallaba en RED.
+          El test pasa en GREEN como consecuencia de la fix, no de modificar el test.
+        evidence_hint: "Test de reproducción en TRACEABILITY.md checkpoint"
+
+  when_metrics:
+    description: "HU contiene: métrica, analytics, evento, tracking"
+    assertions:
+      - id: P3-BUILD-MET-001
+        pillar: P3
+        description: "Eventos de analytics tienen tests de disparo"
+        severity: blocker
+        verification: |
+          Para cada evento de tracking del AC correspondiente: hay un test que
+          verifica que el evento se dispara con las propiedades correctas
+          ante la acción del usuario esperada.
+        evidence_hint: "Tests de eventos de analytics"
+
+      - id: P3-BUILD-MET-002
+        pillar: P3
+        description: "Tests de analytics no dependen de la plataforma externa"
+        severity: warning
+        verification: |
+          Los tests de analytics mockean la capa de envío y verifican que
+          el tracker recibió el evento correcto. No requieren conexión a Firebase,
+          Amplitude u otras plataformas.
+        evidence_hint: "Mock de plataforma de analytics en tests"

@@ -1,0 +1,344 @@
+# Assertions for SPEC
+# Forge v0.4 Validation System
+# Reorganized by the 5 Pillars (P1-P5)
+# ID format: P{pillar}-SPEC-{NNN}
+
+phase: spec
+
+# ─────────────────────────────────────────────
+# P1 — Problema de Negocio
+# ¿Esto resuelve lo que pide el ticket?
+# ─────────────────────────────────────────────
+pillars:
+  - pillar: P1
+    name: Problema de Negocio
+    assertions:
+      - id: P1-SPEC-001
+        pillar: P1
+        description: "HU incluida verbatim en la SPEC"
+        severity: blocker
+        verification: |
+          Sección 1 (User Story) contiene el texto original del ticket
+          sin parafrasear ni resumir. Título, descripción y ACs originales presentes.
+        evidence_hint: "Primeras líneas de la User Story"
+
+      - id: P1-SPEC-002
+        pillar: P1
+        description: "Problema de negocio confirmado en conversación"
+        severity: blocker
+        verification: |
+          Sección 2 (Profundidad y Justificación) o notas de conversación
+          confirman el problema real que resuelve la HU (no la solución técnica).
+        evidence_hint: "Descripción del problema confirmado"
+
+      - id: P1-SPEC-003
+        pillar: P1
+        description: "Cada AC traza a la HU original"
+        severity: blocker
+        verification: |
+          Cada AC de la sección 3 puede vincularse a un requisito explícito
+          de la HU original. No hay ACs que resuelvan problemas distintos al ticket.
+        evidence_hint: "ACs y su origen en la HU"
+
+      - id: P1-SPEC-004
+        pillar: P1
+        description: "ACs agregados por el agente tienen aprobación documentada"
+        severity: blocker
+        verification: |
+          Si hay ACs que no estaban en la HU original, deben tener nota
+          de aprobación explícita del dev. El agente NUNCA agrega ACs sin aprobación.
+        evidence_hint: "ACs nuevos con nota de aprobación"
+
+      - id: P1-SPEC-005
+        pillar: P1
+        description: "ACs en formato GWT con 'Then' observable"
+        severity: blocker
+        verification: |
+          Cada AC usa Dado/Cuando/Entonces (o Given/When/Then).
+          El "Entonces" describe un resultado observable por el usuario,
+          no un detalle de implementación.
+        evidence_hint: "Formato GWT de cada AC"
+
+      - id: P1-SPEC-006
+        pillar: P1
+        description: "Mínimo 2 casos borde documentados"
+        severity: blocker
+        verification: |
+          Sección 4 (Casos Borde) tiene >= 2 entradas concretas, no genéricas.
+          Cada caso borde es específico al problema de la HU.
+        evidence_hint: "Lista de casos borde"
+
+      - id: P1-SPEC-007
+        pillar: P1
+        description: "Al menos 3 ACs con IDs secuenciales"
+        severity: blocker
+        verification: |
+          Tabla de ACs con >= 3 filas con IDs AC-1, AC-2, ..., AC-N secuenciales.
+        evidence_hint: "Número de ACs y sus IDs"
+
+      - id: P1-SPEC-008
+        pillar: P1
+        description: "Story points numéricos y coherentes con profundidad"
+        severity: blocker
+        verification: |
+          SP es entero de la escala Fibonacci: 1, 2, 3, 5, 8, 13.
+          PROFUNDA con <= 2 SP: advertencia. LIGERA con >= 8 SP: advertencia.
+        evidence_hint: "Valor SP y profundidad declarada"
+
+  # ─────────────────────────────────────────────
+  # P2 — Consistencia Arquitectónica
+  # ¿Está construido como el resto del proyecto?
+  # ─────────────────────────────────────────────
+  - pillar: P2
+    name: Consistencia Arquitectónica
+    assertions:
+      - id: P2-SPEC-001
+        pillar: P2
+        description: "KNOWLEDGE.md consultado en Step 0"
+        severity: blocker
+        verification: |
+          Sección 10 (Decisiones Técnicas) referencia entradas de KNOWLEDGE.md
+          o declara explícitamente que KNOWLEDGE.md está vacío.
+          Si KNOWLEDGE.md tiene contenido y no se referencia: FALLA.
+        evidence_hint: "Referencias a KNOWLEDGE.md o declaración de vacío"
+
+      - id: P2-SPEC-002
+        pillar: P2
+        description: "Desviaciones de patrones establecidos están justificadas"
+        severity: blocker
+        verification: |
+          Si la SPEC usa un patrón diferente al documentado en KNOWLEDGE.md,
+          la desviación tiene justificación técnica explícita en Sección 10.
+        evidence_hint: "Patrones usados vs KNOWLEDGE.md"
+
+      - id: P2-SPEC-003
+        pillar: P2
+        description: "Stack y herramientas consistentes con el proyecto"
+        severity: blocker
+        verification: |
+          Contratos, interfaces y herramientas propuestas son consistentes
+          con el stack del proyecto (Kotlin, Clean Architecture, MVVM, Hilt, etc.).
+          No hay introducción de nuevas dependencias sin justificación.
+        evidence_hint: "Herramientas y stack propuesto"
+
+  # ─────────────────────────────────────────────
+  # P3 — Tests de Comportamiento Real
+  # ¿Los ACs son testables como comportamiento?
+  # ─────────────────────────────────────────────
+  - pillar: P3
+    name: Tests de Comportamiento Real
+    assertions:
+      - id: P3-SPEC-001
+        pillar: P3
+        description: "Ningún AC describe implementación"
+        severity: blocker
+        verification: |
+          Los ACs no mencionan clases, métodos, mocks, repositorios, ViewModels
+          ni detalles técnicos internos. Cada AC describe QUÉ hace el sistema
+          desde la perspectiva del usuario, no CÓMO lo hace internamente.
+        evidence_hint: "ACs sin lenguaje de implementación"
+
+      - id: P3-SPEC-002
+        pillar: P3
+        description: "Input y output identificables sin mencionar mocks"
+        severity: blocker
+        verification: |
+          Para cada AC se puede identificar: qué entra al sistema (acción del usuario
+          o dato externo) y qué sale (comportamiento observable), sin necesidad
+          de conocer la implementación interna.
+        evidence_hint: "Input/output de cada AC"
+
+      - id: P3-SPEC-003
+        pillar: P3
+        description: "Definition of Done concreta y verificable"
+        severity: blocker
+        verification: |
+          Sección 6 (DoD) tiene criterios específicos y comprobables,
+          no frases genéricas como "código limpio" o "buenas prácticas".
+          Cada criterio de DoD puede marcarse como cumplido o no.
+        evidence_hint: "Criterios de DoD"
+
+  # ─────────────────────────────────────────────
+  # P4 — Integración con lo Existente
+  # ¿El código nuevo se integra con el proyecto?
+  # ─────────────────────────────────────────────
+  - pillar: P4
+    name: Integración con lo Existente
+    assertions:
+      - id: P4-SPEC-001
+        pillar: P4
+        description: "Sección 5a identifica componentes reutilizables o justifica vacío"
+        severity: blocker
+        verification: |
+          Sección 5a (Componentes a Reutilizar) no puede quedar vacía sin justificación.
+          Si está vacía, debe declarar explícitamente que es la primera feature del módulo
+          o que no hay nada aplicable, con razón concreta.
+        evidence_hint: "Contenido de sección 5a o justificación de vacío"
+
+  # ─────────────────────────────────────────────
+  # P5 — Trazabilidad
+  # ¿Podemos responder "por qué existe esta línea"?
+  # ─────────────────────────────────────────────
+  - pillar: P5
+    name: Trazabilidad
+    assertions:
+      - id: P5-SPEC-001
+        pillar: P5
+        description: "Cada AC tiene ID único"
+        severity: blocker
+        verification: |
+          Todos los ACs tienen ID en formato AC-N, secuencial y único.
+          No hay IDs duplicados ni ACs sin ID.
+        evidence_hint: "Lista de IDs de AC"
+
+      - id: P5-SPEC-002
+        pillar: P5
+        description: "Archivos nuevos vinculados a ACs"
+        severity: blocker
+        verification: |
+          Sección 5b (Componentes Nuevos) vincula cada archivo/componente nuevo
+          al AC que lo requiere. No hay archivos propuestos sin AC de origen.
+        evidence_hint: "Archivos con AC de origen"
+
+# ─────────────────────────────────────────────
+# Bloques Condicionales
+# Se activan según el contenido de la SPEC
+# ─────────────────────────────────────────────
+conditionals:
+
+  when_ui_present:
+    description: "SPEC tiene sección 'Estados de UI' (sección 8) con contenido"
+    assertions:
+      - id: P1-SPEC-UI-001
+        pillar: P1
+        description: "Estados de UI cubren todos los escenarios de los ACs"
+        severity: blocker
+        verification: |
+          Sección 8 (Estados de UI) incluye al menos: loading, error, empty, success
+          para cada pantalla. Cada estado mapea a al menos un AC.
+        evidence_hint: "Estados por pantalla y sus ACs"
+
+      - id: P3-SPEC-UI-001
+        pillar: P3
+        description: "Cada estado de UI es observable (no describe lógica interna)"
+        severity: blocker
+        verification: |
+          Los estados describen lo que VE el usuario (spinner, mensaje de error,
+          lista vacía, datos cargados), no el estado interno del ViewModel.
+        evidence_hint: "Descripción de cada estado"
+
+  when_api_present:
+    description: "SPEC tiene sección 'Contrato de API' (sección 12) con contenido"
+    assertions:
+      - id: P2-SPEC-API-001
+        pillar: P2
+        description: "Contrato de API referencia endpoint existente o documenta uno nuevo"
+        severity: blocker
+        verification: |
+          Si el endpoint ya existe: referencia a KNOWLEDGE.md o documentación existente.
+          Si es nuevo: endpoint, método HTTP, request y response documentados.
+        evidence_hint: "Endpoint y referencia"
+
+      - id: P3-SPEC-API-001
+        pillar: P3
+        description: "Escenarios de error del API documentados como ACs o casos borde"
+        severity: blocker
+        verification: |
+          Los errores del API (4xx, 5xx, timeout, sin red) tienen AC o caso borde
+          correspondiente. No hay happy-path-only.
+        evidence_hint: "Errores de API en ACs o casos borde"
+
+  when_domain_present:
+    description: "SPEC tiene sección 'Modelo de Dominio' (sección 7) con contenido"
+    assertions:
+      - id: P3-SPEC-DOM-001
+        pillar: P3
+        description: "Invariantes del dominio son verificables en tests"
+        severity: blocker
+        verification: |
+          Cada invariante listada en el Modelo de Dominio describe una regla
+          de negocio que puede validarse con un test concreto (input → expected failure).
+        evidence_hint: "Invariantes y su testabilidad"
+
+      - id: P5-SPEC-DOM-001
+        pillar: P5
+        description: "Cada entidad del dominio tiene AC de origen"
+        severity: warning
+        verification: |
+          Las entidades, value objects y agregados del Modelo de Dominio
+          pueden trazarse a al menos un AC que los requiere.
+        evidence_hint: "Entidades y sus ACs"
+
+  when_bug:
+    description: "HU contiene: bug, fix, corregir, error, defecto"
+    assertions:
+      - id: P1-SPEC-BUG-001
+        pillar: P1
+        description: "Causa raíz del bug documentada"
+        severity: blocker
+        verification: |
+          La SPEC incluye descripción de la causa raíz del bug, no solo el síntoma.
+          El AC de reproducción describe el comportamiento actual (incorrecto)
+          y el comportamiento esperado (correcto).
+        evidence_hint: "Causa raíz y ACs de reproducción/corrección"
+
+      - id: P3-SPEC-BUG-001
+        pillar: P3
+        description: "AC de regresión incluido"
+        severity: blocker
+        verification: |
+          Hay al menos un AC que describe el escenario de reproducción del bug
+          y que servirá como test de regresión permanente.
+        evidence_hint: "AC de regresión"
+
+  when_metrics:
+    description: "HU contiene: métrica, analytics, evento, tracking"
+    assertions:
+      - id: P1-SPEC-MET-001
+        pillar: P1
+        description: "Eventos de analytics mapeados a ACs"
+        severity: blocker
+        verification: |
+          Cada evento de tracking o analytics tiene un AC que especifica
+          cuándo se dispara, qué propiedades lleva y qué acción del usuario lo origina.
+        evidence_hint: "Eventos y sus ACs"
+
+      - id: P3-SPEC-MET-001
+        pillar: P3
+        description: "Eventos son verificables sin acceso a la plataforma de analytics"
+        severity: warning
+        verification: |
+          Los ACs de analytics describen comportamiento verificable localmente
+          (el evento fue enviado, con estas propiedades), no resultados en dashboards externos.
+        evidence_hint: "Verificabilidad local de eventos"
+
+# ─────────────────────────────────────────────
+# Quality Gate
+# Assertions sobre el Quality Score calculado
+# ─────────────────────────────────────────────
+quality_gate:
+  description: "Quality Score mínimo para aprobar SPEC"
+  assertions:
+    - id: QG-SPEC-001
+      description: "Quality Score >= umbral mínimo configurado (default 7/10)"
+      severity: blocker
+      verification: |
+        El bloque Quality Score al final de la SPEC muestra X/10 >= spec_score_minimo
+        configurado en config.yaml (default 7). Score < 7: SPEC bloqueada.
+      evidence_hint: "Score obtenido y umbral"
+
+    - id: QG-SPEC-002
+      description: "P1 score no es 0 (ACs resuelven problema correcto)"
+      severity: blocker
+      verification: |
+        P1 = 0 significa que los ACs resuelven un problema diferente al ticket.
+        Es condición de bloqueo independiente del score total.
+      evidence_hint: "Score P1"
+
+    - id: QG-SPEC-003
+      description: "No hay blockers sin resolver"
+      severity: blocker
+      verification: |
+        Todas las assertions de severity: blocker en esta fase pasan.
+        Un solo blocker sin resolver impide aprobar la SPEC.
+      evidence_hint: "Lista de blockers pendientes"
