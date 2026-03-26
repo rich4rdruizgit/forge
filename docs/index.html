@@ -212,57 +212,227 @@
 
   /* --- PIPELINE --- */
   .pipeline-section { background: var(--bg-surface); }
-  .pipeline {
-    display: flex; align-items: flex-start; justify-content: center;
-    gap: 0; margin: 2rem 0; flex-wrap: wrap;
+
+  .pipeline-track {
+    position: relative;
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 3rem auto 0; max-width: 700px; padding: 0 1rem;
   }
-  .pipeline-step {
+
+  /* Background line */
+  .pipeline-line {
+    position: absolute; top: 28px; left: 40px; right: 40px;
+    height: 3px; background: var(--border); border-radius: 2px; z-index: 0;
+  }
+
+  /* Animated fill */
+  .pipeline-line-fill {
+    position: absolute; top: 0; left: 0; height: 100%;
+    background: linear-gradient(90deg, var(--accent), #FF9F6B);
+    border-radius: 2px; width: 0%;
+    transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* Phase node */
+  .pipeline-node {
+    position: relative; z-index: 1;
     display: flex; flex-direction: column; align-items: center;
-    cursor: pointer; padding: 1rem 1.25rem; position: relative;
-    transition: var(--transition);
-    border-radius: var(--radius-sm);
-    min-width: 130px;
+    cursor: pointer; gap: 0.5rem; background: none; border: none;
+    padding: 0; outline: none; -webkit-tap-highlight-color: transparent;
   }
-  .pipeline-step:hover, .pipeline-step.active {
-    background: var(--bg-card);
-  }
-  .pipeline-step.active .step-name { color: var(--accent); }
-  .pipeline-arrow {
-    display: flex; align-items: center; padding-top: 1rem;
-    color: var(--text-muted); font-size: 1.25rem;
-  }
-  .step-dot {
-    width: 40px; height: 40px; border-radius: 50%;
-    background: var(--bg-card); border: 2px solid var(--border);
+
+  .pipeline-node-circle {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: var(--bg-surface); border: 3px solid var(--border);
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; margin-bottom: 0.5rem;
-    transition: border-color var(--transition), background var(--transition);
+    font-size: 1.35rem; position: relative;
+    transition: border-color 0.4s ease, background 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
   }
-  .pipeline-step.active .step-dot,
-  .pipeline-step:hover .step-dot {
+
+  .pipeline-node.completed .pipeline-node-circle {
+    border-color: var(--teal);
+    background: rgba(78, 205, 196, 0.1);
+  }
+  .pipeline-node.completed .pipeline-node-circle::after {
+    content: '\2713'; position: absolute; top: -4px; right: -4px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--teal); color: var(--bg); font-size: 0.65rem;
+    display: flex; align-items: center; justify-content: center; font-weight: 900;
+  }
+
+  .pipeline-node.active .pipeline-node-circle {
     border-color: var(--accent);
     background: var(--accent-glow);
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.25);
+    transform: scale(1.08);
+    animation: pipelinePulse 2s ease-in-out infinite;
   }
-  .step-name {
-    font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 0.08em; transition: color var(--transition);
+
+  @keyframes pipelinePulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 107, 53, 0.25); }
+    50% { box-shadow: 0 0 35px rgba(255, 107, 53, 0.4); }
   }
-  .pipeline-desc {
-    margin-top: 2rem; padding: 1.5rem 2rem;
+
+  .pipeline-node-label {
+    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text-muted);
+    transition: color 0.4s ease;
+  }
+  .pipeline-node.active .pipeline-node-label { color: var(--accent); }
+  .pipeline-node.completed .pipeline-node-label { color: var(--teal); }
+
+  /* Nav buttons */
+  .pipeline-nav {
+    display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.5rem;
+  }
+  .pipeline-nav-btn {
+    width: 36px; height: 36px; border-radius: 50%;
     background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: var(--radius);
-    min-height: 80px;
+    color: var(--text-muted); font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
     transition: var(--transition);
   }
-  .pipeline-desc h4 { color: var(--accent); font-size: 0.9rem; margin-bottom: 0.5rem; }
-  .pipeline-desc p { color: var(--text-muted); font-size: 0.95rem; }
-  .gate-badge {
-    display: inline-flex; align-items: center; gap: 0.35rem;
-    padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.75rem;
-    font-weight: 700; letter-spacing: 0.05em; margin-top: 0.5rem;
+  .pipeline-nav-btn:hover {
+    border-color: var(--accent); color: var(--accent);
+    background: var(--accent-glow);
   }
-  .gate-red { background: rgba(255, 77, 77, 0.12); color: #FF4D4D; }
-  .gate-green { background: rgba(78, 205, 196, 0.12); color: var(--teal); }
+
+  /* Detail card */
+  .pipeline-detail {
+    margin-top: 2rem;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: opacity 0.35s ease, max-height 0.5s ease;
+  }
+  .pipeline-detail-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 2rem; border-bottom: 1px solid var(--border);
+  }
+  .pipeline-detail-title {
+    font-size: 1.1rem; font-weight: 800; color: var(--accent);
+  }
+  .pipeline-detail-cmd {
+    font-family: var(--mono); font-size: 0.8rem; color: var(--teal);
+    background: rgba(78, 205, 196, 0.08); padding: 0.3rem 0.8rem;
+    border-radius: 99px;
+  }
+
+  .pipeline-detail-body {
+    display: grid; grid-template-columns: 1fr 2fr 1fr;
+    gap: 0; min-height: 120px;
+  }
+
+  .pipeline-detail-col {
+    padding: 1.5rem; display: flex; flex-direction: column;
+    justify-content: center;
+  }
+  .pipeline-detail-col:not(:last-child) {
+    border-right: 1px solid var(--border);
+  }
+  .pipeline-detail-col-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem;
+    display: flex; align-items: center; gap: 0.35rem;
+  }
+  .pipeline-detail-col-label .arrow { color: var(--accent); font-size: 0.85rem; }
+  .pipeline-detail-col p {
+    color: var(--text); font-size: 0.9rem; line-height: 1.6;
+  }
+
+  .pipeline-gate {
+    padding: 0.85rem 2rem; border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.82rem; font-weight: 600;
+  }
+  .pipeline-gate-icon { font-size: 1rem; }
+  .pipeline-gate-text { color: var(--text-muted); }
+
+  /* BUILD sub-flow */
+  .build-subflow {
+    padding: 0 2rem 1.5rem;
+    display: none;
+  }
+  .build-subflow.visible { display: block; }
+
+  .subflow-track {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin: 1rem 0; flex-wrap: wrap;
+  }
+  .subflow-node {
+    display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+    padding: 0.75rem 1rem;
+  }
+  .subflow-circle {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 800; border: 2px solid;
+  }
+  .subflow-circle.red { border-color: #FF4D4D; color: #FF4D4D; background: rgba(255, 77, 77, 0.08); }
+  .subflow-circle.gate { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+  .subflow-circle.green { border-color: #28C840; color: #28C840; background: rgba(40, 200, 64, 0.08); }
+  .subflow-circle.refactor { border-color: var(--teal); color: var(--teal); background: rgba(78, 205, 196, 0.08); }
+  .subflow-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-muted);
+  }
+  .subflow-arrow {
+    color: var(--text-muted); font-size: 1.1rem; padding: 0 0.25rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .autogate-checklist {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 1.5rem;
+    margin: 1rem 0;
+  }
+  .autogate-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.82rem; color: var(--text-muted);
+    opacity: 0; transform: translateX(-8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .autogate-item.show { opacity: 1; transform: translateX(0); }
+  .autogate-check {
+    width: 18px; height: 18px; border-radius: 4px;
+    background: rgba(40, 200, 64, 0.1); border: 1.5px solid #28C840;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.6rem; color: #28C840; flex-shrink: 0;
+  }
+
+  .build-callout {
+    margin-top: 1rem; padding: 0.85rem 1.15rem;
+    background: rgba(255, 107, 53, 0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.85rem; color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .build-callout strong { color: var(--text); }
+
+  /* Pipeline fade transition */
+  .pipeline-detail-content {
+    transition: opacity 0.3s ease;
+  }
+  .pipeline-detail-content.fading { opacity: 0; }
+
+  /* Responsive pipeline */
+  @media (max-width: 640px) {
+    .pipeline-track {
+      flex-wrap: wrap; justify-content: center; gap: 0.5rem;
+      max-width: 360px;
+    }
+    .pipeline-line { display: none; }
+    .pipeline-node-circle { width: 44px; height: 44px; font-size: 1.1rem; }
+    .pipeline-detail-body {
+      grid-template-columns: 1fr;
+    }
+    .pipeline-detail-col:not(:last-child) {
+      border-right: none; border-bottom: 1px solid var(--border);
+    }
+    .autogate-checklist { grid-template-columns: 1fr; }
+    .subflow-track { flex-direction: column; }
+    .subflow-arrow { transform: rotate(90deg); }
+  }
 
   /* --- TERMINAL --- */
   .terminal {
@@ -467,8 +637,8 @@
     .nav-hamburger { display: flex; }
     .pillar-grid { grid-template-columns: 1fr; }
     .pillar-grid .pillar-card:last-child { max-width: none; }
-    .pipeline { flex-direction: column; align-items: center; }
-    .pipeline-arrow { transform: rotate(90deg); padding: 0; }
+    .pipeline-track { flex-wrap: wrap; justify-content: center; gap: 0.5rem; max-width: 360px; }
+    .pipeline-line { display: none; }
     .score-row { grid-template-columns: 1fr; gap: 0.25rem; }
     .score-value { text-align: left; }
     .memory-flow { flex-direction: column; }
@@ -589,35 +759,42 @@
       <p class="section-label">The Pipeline</p>
       <h2 class="section-title">From ticket to production, gated</h2>
     </div>
-    <div class="pipeline fade-in" id="pipelineViz">
-      <div class="pipeline-step active" data-phase="new">
-        <div class="step-dot">&#x1F525;</div>
-        <div class="step-name">New</div>
+
+    <div class="pipeline-track fade-in" id="pipelineTrack">
+      <div class="pipeline-line">
+        <div class="pipeline-line-fill" id="pipelineLineFill"></div>
       </div>
-      <div class="pipeline-arrow">&rarr;</div>
-      <div class="pipeline-step" data-phase="spec">
-        <div class="step-dot">&#x1F4CB;</div>
-        <div class="step-name">Spec</div>
-      </div>
-      <div class="pipeline-arrow">&rarr;</div>
-      <div class="pipeline-step" data-phase="build">
-        <div class="step-dot">&#x1F6E0;</div>
-        <div class="step-name">Build</div>
-      </div>
-      <div class="pipeline-arrow">&rarr;</div>
-      <div class="pipeline-step" data-phase="verify">
-        <div class="step-dot">&#x2705;</div>
-        <div class="step-name">Verify</div>
-      </div>
-      <div class="pipeline-arrow">&rarr;</div>
-      <div class="pipeline-step" data-phase="close">
-        <div class="step-dot">&#x1F4E6;</div>
-        <div class="step-name">Close</div>
-      </div>
+      <button class="pipeline-node active" data-phase="new" aria-label="NEW phase">
+        <div class="pipeline-node-circle">&#x1F525;</div>
+        <span class="pipeline-node-label">New</span>
+      </button>
+      <button class="pipeline-node" data-phase="spec" aria-label="SPEC phase">
+        <div class="pipeline-node-circle">&#x1F4CB;</div>
+        <span class="pipeline-node-label">Spec</span>
+      </button>
+      <button class="pipeline-node" data-phase="build" aria-label="BUILD phase">
+        <div class="pipeline-node-circle">&#x1F6E0;</div>
+        <span class="pipeline-node-label">Build</span>
+      </button>
+      <button class="pipeline-node" data-phase="verify" aria-label="VERIFY phase">
+        <div class="pipeline-node-circle">&#x2705;</div>
+        <span class="pipeline-node-label">Verify</span>
+      </button>
+      <button class="pipeline-node" data-phase="close" aria-label="CLOSE phase">
+        <div class="pipeline-node-circle">&#x1F4E6;</div>
+        <span class="pipeline-node-label">Close</span>
+      </button>
     </div>
-    <div class="pipeline-desc fade-in" id="pipelineDesc">
-      <h4>forge new</h4>
-      <p>Create a new feature from a user story. Forge analyzes complexity, assigns depth, and validates story points before any code is written.</p>
+
+    <div class="pipeline-nav fade-in">
+      <button class="pipeline-nav-btn" id="pipelinePrev" aria-label="Previous phase">&#x2190;</button>
+      <button class="pipeline-nav-btn" id="pipelineNext" aria-label="Next phase">&#x2192;</button>
+    </div>
+
+    <div class="pipeline-detail fade-in" id="pipelineDetail">
+      <div class="pipeline-detail-content" id="pipelineDetailContent">
+        <!-- Populated by JS -->
+      </div>
     </div>
   </div>
 </section>
@@ -837,25 +1014,216 @@
   fadeEls.forEach(function(el) { fadeObs.observe(el); });
 
   /* --- PIPELINE INTERACTIVITY --- */
-  var phases = {
-    new:    { title: 'forge new',    desc: 'Create a new feature from a user story. Forge analyzes complexity, assigns depth, and validates story points before any code is written.' },
-    spec:   { title: 'forge spec',   desc: '7-step conversation protocol. AI asks, never invents. Builds a complete specification through structured dialogue with the developer.' },
-    build:  { title: 'forge build',  desc: 'Tests first (RED), automatic gate validates, then implementation (GREEN). Tests are immutable once written — no retroactive changes allowed.' },
-    verify: { title: 'forge verify', desc: 'Every acceptance criterion verified with evidence. Done coding does not mean done. Each criterion gets a PASS/FAIL with proof.' },
-    close:  { title: 'forge close',  desc: 'Archive the feature and extract knowledge for the next one. Patterns, decisions, and contracts are persisted to KNOWLEDGE.md.' }
+  var phaseOrder = ['new', 'spec', 'build', 'verify', 'close'];
+  var phaseData = {
+    new: {
+      title: 'NEW', cmd: 'forge new',
+      inText: 'User Story from grooming (title, ACs, points)',
+      happens: 'Evaluates complexity \u2192 assigns depth (LIGHT / MEDIUM / DEEP) \u2192 consults project memory \u2192 checks fragmentation',
+      outText: 'Feature cycle created, SPEC.md ready',
+      gate: 'Dev confirms depth'
+    },
+    spec: {
+      title: 'SPEC', cmd: 'forge spec',
+      inText: 'HU + KNOWLEDGE.md context + stack guide',
+      happens: '7-step conversation protocol: anchor to business problem \u2192 work ACs \u2192 validate architecture \u2192 challenge questions \u2192 Quality Score',
+      outText: 'SPEC.md with Quality Score \u2265 7/10',
+      gate: 'forge approve \u2014 assertions by 5 pillars'
+    },
+    build: {
+      title: 'BUILD', cmd: 'forge build',
+      inText: 'Approved SPEC.md',
+      happens: 'RED: generate ALL tests \u2192 AUTO-GATE validates \u2192 GREEN: implement to pass tests',
+      outText: 'Tests + implementation code + traceability matrix',
+      gate: 'forge approve \u2014 all tests green, traceability complete',
+      hasSubflow: true
+    },
+    verify: {
+      title: 'VERIFY', cmd: 'forge verify',
+      inText: 'SPEC.md + code + tests',
+      happens: 'Every AC verified with evidence (test results, screenshots). Definition of Done checked point by point.',
+      outText: 'VERIFY.md with evidence per AC',
+      gate: 'forge approve \u2014 all ACs have evidence'
+    },
+    close: {
+      title: 'CLOSE', cmd: 'forge close',
+      inText: 'All approved artifacts',
+      happens: 'Archive feature \u2192 extract knowledge candidates \u2192 dev approves each \u2192 update KNOWLEDGE.md',
+      outText: 'INDEX.md + KNOWLEDGE.md updated',
+      gate: 'None \u2014 final step'
+    }
   };
 
-  document.getElementById('pipelineViz').addEventListener('click', function(e) {
-    var step = e.target.closest('.pipeline-step');
-    if (!step) return;
-    var phase = step.dataset.phase;
-    var info = phases[phase];
-    if (!info) return;
-    document.querySelectorAll('.pipeline-step').forEach(function(s) { s.classList.remove('active'); });
-    step.classList.add('active');
-    var desc = document.getElementById('pipelineDesc');
-    desc.innerHTML = '<h4>' + info.title + '</h4><p>' + info.desc + '</p>';
+  var autogateItems = [
+    'Each AC has \u22651 test',
+    'Tests verify behavior, not implementation',
+    'Error scenarios covered',
+    'Mock depth \u2264 2 layers'
+  ];
+
+  var currentPhase = 0;
+  var pipelineAutoPlayed = false;
+  var pipelineAutoTimer = null;
+
+  function getPipelineLineFillPercent(idx) {
+    if (idx <= 0) return 0;
+    return (idx / (phaseOrder.length - 1)) * 100;
+  }
+
+  function renderPhaseDetail(phaseKey) {
+    var d = phaseData[phaseKey];
+    var html = '';
+    html += '<div class="pipeline-detail-header">';
+    html += '<span class="pipeline-detail-title">' + d.title + '</span>';
+    html += '<span class="pipeline-detail-cmd">' + d.cmd + '</span>';
+    html += '</div>';
+    html += '<div class="pipeline-detail-body">';
+    html += '<div class="pipeline-detail-col">';
+    html += '<div class="pipeline-detail-col-label"><span class="arrow">\u2192</span> What goes IN</div>';
+    html += '<p>' + d.inText + '</p>';
+    html += '</div>';
+    html += '<div class="pipeline-detail-col">';
+    html += '<div class="pipeline-detail-col-label">What happens</div>';
+    html += '<p>' + d.happens + '</p>';
+    html += '</div>';
+    html += '<div class="pipeline-detail-col">';
+    html += '<div class="pipeline-detail-col-label"><span class="arrow">\u2193</span> What comes OUT</div>';
+    html += '<p>' + d.outText + '</p>';
+    html += '</div>';
+    html += '</div>';
+
+    // BUILD sub-flow
+    if (d.hasSubflow) {
+      html += '<div class="build-subflow visible" id="buildSubflow">';
+      html += '<div class="subflow-track">';
+      html += '<div class="subflow-node"><div class="subflow-circle red">RED</div><span class="subflow-label">Write tests</span></div>';
+      html += '<span class="subflow-arrow">\u2192</span>';
+      html += '<div class="subflow-node"><div class="subflow-circle gate">\uD83D\uDD12</div><span class="subflow-label">Auto-gate</span></div>';
+      html += '<span class="subflow-arrow">\u2192</span>';
+      html += '<div class="subflow-node"><div class="subflow-circle green">GO</div><span class="subflow-label">Implement</span></div>';
+      html += '<span class="subflow-arrow">\u2192</span>';
+      html += '<div class="subflow-node"><div class="subflow-circle refactor">\u267B</div><span class="subflow-label">Refactor</span></div>';
+      html += '</div>';
+      html += '<div class="autogate-checklist" id="autogateChecklist">';
+      autogateItems.forEach(function(item) {
+        html += '<div class="autogate-item"><span class="autogate-check">\u2713</span>' + item + '</div>';
+      });
+      html += '</div>';
+      html += '<div class="build-callout">\u26A0\uFE0F <strong>Tests are IMMUTABLE during GREEN.</strong> Only the dev can modify them.</div>';
+      html += '</div>';
+    }
+
+    html += '<div class="pipeline-gate">';
+    html += '<span class="pipeline-gate-icon">\uD83D\uDEE1\uFE0F</span>';
+    html += '<span class="pipeline-gate-text">Gate: ' + d.gate + '</span>';
+    html += '</div>';
+    return html;
+  }
+
+  function setActivePhase(idx, skipAnimation) {
+    currentPhase = idx;
+    var nodes = document.querySelectorAll('.pipeline-node');
+    nodes.forEach(function(n, i) {
+      n.classList.remove('active', 'completed');
+      if (i < idx) n.classList.add('completed');
+      if (i === idx) n.classList.add('active');
+    });
+
+    var fill = document.getElementById('pipelineLineFill');
+    if (fill) fill.style.width = getPipelineLineFillPercent(idx) + '%';
+
+    var content = document.getElementById('pipelineDetailContent');
+    if (!content) return;
+
+    if (skipAnimation) {
+      content.innerHTML = renderPhaseDetail(phaseOrder[idx]);
+      animateAutogateItems();
+      return;
+    }
+
+    content.classList.add('fading');
+    setTimeout(function() {
+      content.innerHTML = renderPhaseDetail(phaseOrder[idx]);
+      content.classList.remove('fading');
+      animateAutogateItems();
+    }, 300);
+  }
+
+  function animateAutogateItems() {
+    var items = document.querySelectorAll('.autogate-item');
+    items.forEach(function(item, i) {
+      setTimeout(function() { item.classList.add('show'); }, 150 * (i + 1));
+    });
+  }
+
+  // Click handling
+  document.getElementById('pipelineTrack').addEventListener('click', function(e) {
+    var node = e.target.closest('.pipeline-node');
+    if (!node) return;
+    var phase = node.dataset.phase;
+    var idx = phaseOrder.indexOf(phase);
+    if (idx === -1) return;
+    if (pipelineAutoTimer) { clearTimeout(pipelineAutoTimer); pipelineAutoTimer = null; }
+    setActivePhase(idx);
   });
+
+  // Nav buttons
+  document.getElementById('pipelinePrev').addEventListener('click', function() {
+    if (pipelineAutoTimer) { clearTimeout(pipelineAutoTimer); pipelineAutoTimer = null; }
+    setActivePhase(Math.max(0, currentPhase - 1));
+  });
+  document.getElementById('pipelineNext').addEventListener('click', function() {
+    if (pipelineAutoTimer) { clearTimeout(pipelineAutoTimer); pipelineAutoTimer = null; }
+    setActivePhase(Math.min(phaseOrder.length - 1, currentPhase + 1));
+  });
+
+  // Keyboard arrows when pipeline is in viewport
+  var pipelineInView = false;
+  document.addEventListener('keydown', function(e) {
+    if (!pipelineInView) return;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (pipelineAutoTimer) { clearTimeout(pipelineAutoTimer); pipelineAutoTimer = null; }
+      setActivePhase(Math.max(0, currentPhase - 1));
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (pipelineAutoTimer) { clearTimeout(pipelineAutoTimer); pipelineAutoTimer = null; }
+      setActivePhase(Math.min(phaseOrder.length - 1, currentPhase + 1));
+    }
+  });
+
+  // Auto-advance on scroll into view
+  var pipelineSection = document.getElementById('pipeline');
+  var pipelineObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      pipelineInView = entry.isIntersecting;
+      if (entry.isIntersecting && !pipelineAutoPlayed) {
+        pipelineAutoPlayed = true;
+        setActivePhase(0, true);
+        var advanceIdx = 1;
+        function autoAdvance() {
+          if (advanceIdx < phaseOrder.length) {
+            pipelineAutoTimer = setTimeout(function() {
+              setActivePhase(advanceIdx);
+              advanceIdx++;
+              autoAdvance();
+            }, 2000);
+          } else {
+            // After completing all, reset to NEW
+            pipelineAutoTimer = setTimeout(function() {
+              setActivePhase(0);
+              pipelineAutoTimer = null;
+            }, 2000);
+          }
+        }
+        autoAdvance();
+      }
+    });
+  }, { threshold: 0.25 });
+  pipelineObs.observe(pipelineSection);
+
+  // Initialize first phase
+  setActivePhase(0, true);
 
   /* --- QUALITY SCORE BAR ANIMATION --- */
   var scoreGrid = document.getElementById('scoreGrid');
