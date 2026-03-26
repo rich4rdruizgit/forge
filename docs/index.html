@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FORGE — Think before you code.</title>
+<style>
+  :root {
+    --bg: #0D0F12;
+    --bg-surface: #141820;
+    --bg-card: #1A1F2B;
+    --bg-card-hover: #222838;
+    --text: #E8E8E8;
+    --text-muted: #8A8F9C;
+    --accent: #FF6B35;
+    --accent-glow: rgba(255, 107, 53, 0.15);
+    --teal: #4ECDC4;
+    --teal-glow: rgba(78, 205, 196, 0.12);
+    --border: #2A2F3C;
+    --code-bg: #0A0C0F;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    --max-w: 1140px;
+    --transition: 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; font-size: 16px; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* --- NAV --- */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 1rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    transition: background var(--transition), box-shadow var(--transition);
+  }
+  .nav.scrolled {
+    background: rgba(13, 15, 18, 0.92);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 1px 0 var(--border);
+  }
+  .nav-logo {
+    font-size: 1.25rem; font-weight: 800; letter-spacing: 0.15em;
+    color: var(--accent);
+  }
+  .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+  .nav-links a {
+    color: var(--text-muted); text-decoration: none; font-size: 0.875rem;
+    font-weight: 500; transition: color var(--transition);
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-hamburger {
+    display: none; background: none; border: none; cursor: pointer;
+    width: 28px; height: 20px; position: relative; flex-direction: column;
+    justify-content: space-between;
+  }
+  .nav-hamburger span {
+    display: block; width: 100%; height: 2px; background: var(--text);
+    transition: var(--transition);
+  }
+
+  /* --- SECTIONS --- */
+  section { padding: 6rem 2rem; }
+  .container { max-width: var(--max-w); margin: 0 auto; }
+
+  .section-title {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800; margin-bottom: 1rem;
+    line-height: 1.2;
+  }
+  .section-subtitle {
+    color: var(--text-muted); font-size: 1.1rem;
+    max-width: 640px; margin-bottom: 3rem;
+  }
+  .section-label {
+    text-transform: uppercase; letter-spacing: 0.12em; font-size: 0.8rem;
+    font-weight: 700; color: var(--accent); margin-bottom: 0.75rem;
+  }
+
+  /* --- FADE ANIMATION --- */
+  .fade-in {
+    opacity: 0; transform: translateY(28px);
+    transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+  }
+  .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+  /* --- HERO --- */
+  .hero {
+    min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; text-align: center;
+    padding-top: 5rem;
+    background: radial-gradient(ellipse 60% 50% at 50% 0%, var(--accent-glow), transparent 70%);
+  }
+  .hero-title {
+    font-size: clamp(4rem, 12vw, 8rem);
+    font-weight: 900; letter-spacing: 0.08em;
+    background: linear-gradient(135deg, var(--accent), #FF9F6B);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .hero-tagline {
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    font-weight: 600; color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .hero-sub {
+    font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+    color: var(--text-muted); max-width: 620px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+  }
+  .btn {
+    display: inline-block; padding: 0.85rem 2.25rem;
+    background: var(--accent); color: #fff; border: none;
+    border-radius: var(--radius-sm); font-size: 1rem; font-weight: 700;
+    text-decoration: none; cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition);
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(255, 107, 53, 0.3);
+  }
+  .btn-outline {
+    background: transparent; border: 1.5px solid var(--accent); color: var(--accent);
+    margin-left: 1rem;
+  }
+  .btn-outline:hover {
+    background: var(--accent-glow);
+    box-shadow: 0 8px 30px rgba(255, 107, 53, 0.15);
+  }
+
+  /* --- CARDS --- */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+  .card-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; }
+  .card p { color: var(--text-muted); font-size: 0.95rem; }
+
+  /* --- PROBLEM SECTION --- */
+  .problem { background: var(--bg-surface); }
+  .problem .bottom-line {
+    margin-top: 2.5rem; padding: 1.5rem 2rem;
+    background: rgba(255, 107, 53, 0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 1.05rem; font-weight: 600;
+  }
+
+  /* --- PILLARS --- */
+  .pillar-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1rem;
+  }
+  .pillar-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-align: center;
+    transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+  .pillar-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: var(--accent); opacity: 0;
+    transition: opacity var(--transition);
+  }
+  .pillar-card:hover::before { opacity: 1; }
+  .pillar-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+  .pillar-num {
+    font-size: 0.75rem; font-weight: 800; color: var(--accent);
+    letter-spacing: 0.1em; margin-bottom: 0.5rem;
+  }
+  .pillar-icon { font-size: 1.75rem; margin-bottom: 0.75rem; }
+  .pillar-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .pillar-card p { color: var(--text-muted); font-size: 0.85rem; line-height: 1.5; }
+
+  /* --- PIPELINE --- */
+  .pipeline-section { background: var(--bg-surface); }
+  .pipeline {
+    display: flex; align-items: flex-start; justify-content: center;
+    gap: 0; margin: 2rem 0; flex-wrap: wrap;
+  }
+  .pipeline-step {
+    display: flex; flex-direction: column; align-items: center;
+    cursor: pointer; padding: 1rem 1.25rem; position: relative;
+    transition: var(--transition);
+    border-radius: var(--radius-sm);
+    min-width: 130px;
+  }
+  .pipeline-step:hover, .pipeline-step.active {
+    background: var(--bg-card);
+  }
+  .pipeline-step.active .step-name { color: var(--accent); }
+  .pipeline-arrow {
+    display: flex; align-items: center; padding-top: 1rem;
+    color: var(--text-muted); font-size: 1.25rem;
+  }
+  .step-dot {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: var(--bg-card); border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; margin-bottom: 0.5rem;
+    transition: border-color var(--transition), background var(--transition);
+  }
+  .pipeline-step.active .step-dot,
+  .pipeline-step:hover .step-dot {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+  }
+  .step-name {
+    font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; transition: color var(--transition);
+  }
+  .pipeline-desc {
+    margin-top: 2rem; padding: 1.5rem 2rem;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius);
+    min-height: 80px;
+    transition: var(--transition);
+  }
+  .pipeline-desc h4 { color: var(--accent); font-size: 0.9rem; margin-bottom: 0.5rem; }
+  .pipeline-desc p { color: var(--text-muted); font-size: 0.95rem; }
+  .gate-badge {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.75rem;
+    font-weight: 700; letter-spacing: 0.05em; margin-top: 0.5rem;
+  }
+  .gate-red { background: rgba(255, 77, 77, 0.12); color: #FF4D4D; }
+  .gate-green { background: rgba(78, 205, 196, 0.12); color: var(--teal); }
+
+  /* --- TERMINAL --- */
+  .terminal {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+    max-width: 720px; margin: 2rem auto 0;
+    font-family: var(--mono);
+  }
+  .terminal-bar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0.75rem 1rem; background: #161920; border-bottom: 1px solid var(--border);
+  }
+  .terminal-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .terminal-dot.r { background: #FF5F57; }
+  .terminal-dot.y { background: #FEBC2E; }
+  .terminal-dot.g { background: #28C840; }
+  .terminal-bar span { margin-left: auto; font-size: 0.75rem; color: var(--text-muted); }
+  .terminal-body {
+    padding: 1.25rem 1.5rem;
+    font-size: 0.85rem; line-height: 1.8;
+    min-height: 340px;
+    color: var(--text-muted);
+  }
+  .terminal-body .cmd { color: var(--teal); }
+  .terminal-body .prompt { color: var(--accent); }
+  .terminal-body .highlight { color: var(--text); }
+  .terminal-body .success { color: #28C840; }
+  .terminal-body .info { color: #FEBC2E; }
+  .terminal-line { opacity: 0; transform: translateX(-8px); }
+  .terminal-line.show {
+    opacity: 1; transform: translateX(0);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  /* --- DEPTH --- */
+  .depth-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem;
+  }
+  .depth-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 2rem;
+    transition: transform var(--transition), border-color var(--transition);
+    position: relative; overflow: hidden;
+  }
+  .depth-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .depth-card.light::before { background: var(--teal); }
+  .depth-card.medium::before { background: var(--accent); }
+  .depth-card.deep::before { background: #E84393; }
+  .depth-card:hover { transform: translateY(-4px); }
+  .depth-label {
+    font-size: 0.75rem; font-weight: 800; letter-spacing: 0.12em;
+    text-transform: uppercase; margin-bottom: 1rem;
+  }
+  .depth-card.light .depth-label { color: var(--teal); }
+  .depth-card.medium .depth-label { color: var(--accent); }
+  .depth-card.deep .depth-label { color: #E84393; }
+  .depth-meta { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; }
+  .depth-meta-item {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.85rem;
+  }
+  .depth-meta-item span:first-child { color: var(--text-muted); }
+  .depth-meta-item span:last-child { font-weight: 700; }
+  .depth-examples {
+    margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);
+  }
+  .depth-examples li {
+    color: var(--text-muted); font-size: 0.85rem;
+    list-style: none; padding: 0.2rem 0;
+  }
+  .depth-examples li::before { content: '- '; color: var(--text-muted); }
+
+  /* --- QUALITY SCORE --- */
+  .quality-section { background: var(--bg-surface); }
+  .score-grid {
+    display: flex; flex-direction: column; gap: 1rem;
+    max-width: 600px;
+  }
+  .score-row {
+    display: grid; grid-template-columns: 160px 1fr 50px;
+    align-items: center; gap: 1rem;
+  }
+  .score-label { font-size: 0.9rem; font-weight: 600; }
+  .score-bar-track {
+    height: 8px; background: var(--bg-card); border-radius: 99px;
+    overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%; border-radius: 99px;
+    transition: width 1s ease-out;
+    width: 0;
+  }
+  .score-bar-fill.p1 { background: var(--accent); }
+  .score-bar-fill.p2 { background: var(--teal); }
+  .score-bar-fill.p3 { background: #FEBC2E; }
+  .score-bar-fill.p4 { background: #E84393; }
+  .score-bar-fill.p5 { background: #A29BFE; }
+  .score-value { font-size: 0.9rem; font-weight: 700; text-align: right; }
+  .score-total {
+    margin-top: 1.5rem; padding: 1.25rem 1.5rem;
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .score-total-num {
+    font-size: 2rem; font-weight: 900; color: var(--teal);
+  }
+  .score-total-label { color: var(--text-muted); font-size: 0.9rem; }
+  .score-note {
+    margin-top: 1rem; color: var(--text-muted); font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  /* --- MEMORY --- */
+  .memory-flow {
+    display: flex; align-items: center; justify-content: center;
+    gap: 1.5rem; margin: 2rem 0; flex-wrap: wrap;
+  }
+  .memory-node {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.25rem 1.75rem;
+    text-align: center; font-weight: 600; font-size: 0.95rem;
+  }
+  .memory-node.highlight-node { border-color: var(--teal); color: var(--teal); }
+  .memory-arrow { color: var(--accent); font-size: 1.5rem; }
+  .memory-list {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.75rem; margin-top: 2rem; list-style: none;
+  }
+  .memory-list li {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 0.85rem 1.15rem;
+    font-size: 0.9rem; color: var(--text-muted);
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .memory-list li span { font-size: 1.1rem; }
+
+  /* --- INSTALL --- */
+  .install-section { background: var(--bg-surface); }
+  .code-block {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.5rem 2rem;
+    font-family: var(--mono); font-size: 0.9rem;
+    line-height: 1.9; overflow-x: auto;
+    max-width: 600px;
+    color: var(--text-muted);
+  }
+  .code-block .cmd { color: var(--teal); }
+  .code-block .comment { color: #555B6E; }
+  .badges {
+    display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 2rem;
+  }
+  .badge {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 0.5rem 1rem;
+    font-size: 0.8rem; font-weight: 600; color: var(--text-muted);
+  }
+
+  /* --- FOOTER --- */
+  footer {
+    padding: 3rem 2rem; text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  footer .tagline {
+    font-size: 1.05rem; font-weight: 600; margin-bottom: 1.5rem;
+    color: var(--text-muted);
+  }
+  footer .links {
+    display: flex; gap: 2rem; justify-content: center; align-items: center;
+    flex-wrap: wrap;
+  }
+  footer .links a {
+    color: var(--accent); text-decoration: none; font-size: 0.9rem;
+    font-weight: 600; transition: color var(--transition);
+  }
+  footer .links a:hover { color: #FF9F6B; }
+  footer .links span { color: var(--text-muted); font-size: 0.85rem; }
+
+  /* --- RESPONSIVE --- */
+  @media (max-width: 900px) {
+    .pillar-grid { grid-template-columns: repeat(2, 1fr); }
+    .pillar-grid .pillar-card:last-child {
+      grid-column: 1 / -1; max-width: 340px; margin: 0 auto;
+    }
+    .depth-grid { grid-template-columns: 1fr; }
+    .score-row { grid-template-columns: 120px 1fr 40px; }
+  }
+  @media (max-width: 640px) {
+    section { padding: 4rem 1.25rem; }
+    .nav-links { display: none; }
+    .nav-links.open {
+      display: flex; flex-direction: column;
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: rgba(13, 15, 18, 0.97); padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-hamburger { display: flex; }
+    .pillar-grid { grid-template-columns: 1fr; }
+    .pillar-grid .pillar-card:last-child { max-width: none; }
+    .pipeline { flex-direction: column; align-items: center; }
+    .pipeline-arrow { transform: rotate(90deg); padding: 0; }
+    .score-row { grid-template-columns: 1fr; gap: 0.25rem; }
+    .score-value { text-align: left; }
+    .memory-flow { flex-direction: column; }
+    .memory-arrow { transform: rotate(90deg); }
+    .hero-title { font-size: clamp(3rem, 15vw, 5rem); }
+    .hero { padding-top: 4rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-logo">FORGE</div>
+  <button class="nav-hamburger" id="hamburger" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#pillars">Pillars</a></li>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#depth">Depth</a></li>
+    <li><a href="#quality">Quality</a></li>
+    <li><a href="#install">Install</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="container">
+    <div class="fade-in">
+      <h1 class="hero-title">FORGE</h1>
+      <p class="hero-tagline">Think before you code.</p>
+      <p class="hero-sub">An AI-assisted development methodology that turns user stories into verified, traceable code &mdash; through conversation, not generation.</p>
+      <a href="#install" class="btn">Get Started</a>
+      <a href="https://github.com/rich4rdruizgit/forge" class="btn btn-outline" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- THE PROBLEM -->
+<section class="problem" id="problem">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">The Problem</p>
+      <h2 class="section-title">AI generates code fast.<br>That's the problem.</h2>
+    </div>
+    <div class="card-grid" style="margin-top:2rem;">
+      <div class="card fade-in">
+        <div class="card-icon">&#x1F4A5;</div>
+        <h3>Code that compiles but doesn't solve the problem</h3>
+        <p>AI optimizes for what looks right, not what IS right. It passes the compiler. It fails the user.</p>
+      </div>
+      <div class="card fade-in">
+        <div class="card-icon">&#x1F9EA;</div>
+        <h3>Tests that test mocks, not behavior</h3>
+        <p>90% coverage that proves nothing. Tests pass on CI and break in production. The metric is green; the product is broken.</p>
+      </div>
+      <div class="card fade-in">
+        <div class="card-icon">&#x1F504;</div>
+        <h3>Knowledge lost between features</h3>
+        <p>Every feature starts from zero. Same mistakes, different sprint. No memory, no learning, no compound growth.</p>
+      </div>
+    </div>
+    <div class="bottom-line fade-in">
+      In fintech, these aren't inconveniences. They're incidents.
+    </div>
+  </div>
+</section>
+
+<!-- 5 PILLARS -->
+<section id="pillars">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">The 5 Pillars</p>
+      <h2 class="section-title">Everything Forge validates reduces to 5 questions</h2>
+    </div>
+    <div class="pillar-grid" style="margin-top:2rem;">
+      <div class="pillar-card fade-in">
+        <div class="pillar-num">P1</div>
+        <div class="pillar-icon">&#x1F3AF;</div>
+        <h3>Business Problem</h3>
+        <p>Does this solve what the ticket asks?</p>
+      </div>
+      <div class="pillar-card fade-in">
+        <div class="pillar-num">P2</div>
+        <div class="pillar-icon">&#x1F3D7;</div>
+        <h3>Architectural Consistency</h3>
+        <p>Is this built like the rest of the project?</p>
+      </div>
+      <div class="pillar-card fade-in">
+        <div class="pillar-num">P3</div>
+        <div class="pillar-icon">&#x1F9EA;</div>
+        <h3>Real Behavior Tests</h3>
+        <p>Do tests prove the software works?</p>
+      </div>
+      <div class="pillar-card fade-in">
+        <div class="pillar-num">P4</div>
+        <div class="pillar-icon">&#x1F517;</div>
+        <h3>Integration</h3>
+        <p>Does new code integrate, or create an island?</p>
+      </div>
+      <div class="pillar-card fade-in">
+        <div class="pillar-num">P5</div>
+        <div class="pillar-icon">&#x1F50D;</div>
+        <h3>Traceability</h3>
+        <p>Can we trace every line to a ticket?</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section class="pipeline-section" id="pipeline">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">The Pipeline</p>
+      <h2 class="section-title">From ticket to production, gated</h2>
+    </div>
+    <div class="pipeline fade-in" id="pipelineViz">
+      <div class="pipeline-step active" data-phase="new">
+        <div class="step-dot">&#x1F525;</div>
+        <div class="step-name">New</div>
+      </div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step" data-phase="spec">
+        <div class="step-dot">&#x1F4CB;</div>
+        <div class="step-name">Spec</div>
+      </div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step" data-phase="build">
+        <div class="step-dot">&#x1F6E0;</div>
+        <div class="step-name">Build</div>
+      </div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step" data-phase="verify">
+        <div class="step-dot">&#x2705;</div>
+        <div class="step-name">Verify</div>
+      </div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step" data-phase="close">
+        <div class="step-dot">&#x1F4E6;</div>
+        <div class="step-name">Close</div>
+      </div>
+    </div>
+    <div class="pipeline-desc fade-in" id="pipelineDesc">
+      <h4>forge new</h4>
+      <p>Create a new feature from a user story. Forge analyzes complexity, assigns depth, and validates story points before any code is written.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">How It Works</p>
+      <h2 class="section-title">A feature in 5 minutes</h2>
+    </div>
+    <div class="terminal fade-in" id="terminal">
+      <div class="terminal-bar">
+        <div class="terminal-dot r"></div>
+        <div class="terminal-dot y"></div>
+        <div class="terminal-dot g"></div>
+        <span>forge &mdash; bash</span>
+      </div>
+      <div class="terminal-body" id="termBody"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ADAPTIVE DEPTH -->
+<section id="depth">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">Adaptive Depth</p>
+      <h2 class="section-title">Not every task needs the same depth</h2>
+    </div>
+    <div class="depth-grid" style="margin-top:2rem;">
+      <div class="depth-card light fade-in">
+        <div class="depth-label">Light</div>
+        <h3>Low complexity, isolated scope</h3>
+        <div class="depth-meta">
+          <div class="depth-meta-item"><span>Story Points</span><span>1 &ndash; 3</span></div>
+          <div class="depth-meta-item"><span>SPEC Sections</span><span>6</span></div>
+          <div class="depth-meta-item"><span>Review Depth</span><span>Standard</span></div>
+        </div>
+        <ul class="depth-examples">
+          <li>UI text changes</li>
+          <li>Badge visibility toggle</li>
+          <li>Config flag addition</li>
+        </ul>
+      </div>
+      <div class="depth-card medium fade-in">
+        <div class="depth-label">Medium</div>
+        <h3>Cross-module, moderate logic</h3>
+        <div class="depth-meta">
+          <div class="depth-meta-item"><span>Story Points</span><span>3 &ndash; 8</span></div>
+          <div class="depth-meta-item"><span>SPEC Sections</span><span>10</span></div>
+          <div class="depth-meta-item"><span>Review Depth</span><span>Thorough</span></div>
+        </div>
+        <ul class="depth-examples">
+          <li>New API integration</li>
+          <li>Form with validation</li>
+          <li>State management refactor</li>
+        </ul>
+      </div>
+      <div class="depth-card deep fade-in">
+        <div class="depth-label">Deep</div>
+        <h3>Core architecture, high risk</h3>
+        <div class="depth-meta">
+          <div class="depth-meta-item"><span>Story Points</span><span>8 &ndash; 13+</span></div>
+          <div class="depth-meta-item"><span>SPEC Sections</span><span>15</span></div>
+          <div class="depth-meta-item"><span>Review Depth</span><span>Exhaustive</span></div>
+        </div>
+        <ul class="depth-examples">
+          <li>Auth system overhaul</li>
+          <li>Payment flow redesign</li>
+          <li>Offline-first architecture</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- QUALITY SCORE -->
+<section class="quality-section" id="quality">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">Quality Score</p>
+      <h2 class="section-title">Objective quality, not subjective approval</h2>
+    </div>
+    <div class="score-grid fade-in" id="scoreGrid">
+      <div class="score-row">
+        <div class="score-label">P1: Business</div>
+        <div class="score-bar-track"><div class="score-bar-fill p1" data-width="100%"></div></div>
+        <div class="score-value">3 / 3</div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">P2: Architecture</div>
+        <div class="score-bar-track"><div class="score-bar-fill p2" data-width="100%"></div></div>
+        <div class="score-value">2 / 2</div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">P3: Testability</div>
+        <div class="score-bar-track"><div class="score-bar-fill p3" data-width="100%"></div></div>
+        <div class="score-value">2 / 2</div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">P4: Integration</div>
+        <div class="score-bar-track"><div class="score-bar-fill p4" data-width="100%"></div></div>
+        <div class="score-value">2 / 2</div>
+      </div>
+      <div class="score-row">
+        <div class="score-label">P5: Traceability</div>
+        <div class="score-bar-track"><div class="score-bar-fill p5" data-width="100%"></div></div>
+        <div class="score-value">1 / 1</div>
+      </div>
+      <div class="score-total">
+        <div>
+          <div class="score-total-label">Threshold: &ge; 7 to pass</div>
+        </div>
+        <div class="score-total-num">10 / 10</div>
+      </div>
+      <p class="score-note">Empty knowledge base? No penalty. The score adapts to what exists.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECT MEMORY -->
+<section id="memory">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">Project Memory</p>
+      <h2 class="section-title">Feature N+1 is easier than Feature N</h2>
+    </div>
+    <div class="memory-flow fade-in">
+      <div class="memory-node">forge close</div>
+      <div class="memory-arrow">&rarr;</div>
+      <div class="memory-node highlight-node">KNOWLEDGE.md</div>
+      <div class="memory-arrow">&rarr;</div>
+      <div class="memory-node">forge spec</div>
+    </div>
+    <ul class="memory-list fade-in">
+      <li><span>&#x1F4D0;</span> Architectural patterns</li>
+      <li><span>&#x1F4DD;</span> Design decisions &amp; rationale</li>
+      <li><span>&#x1F4E1;</span> API contracts &amp; interfaces</li>
+      <li><span>&#x1F9E9;</span> Reusable components</li>
+      <li><span>&#x26A0;</span> Known errors &amp; edge cases</li>
+      <li><span>&#x1F504;</span> Naming conventions</li>
+    </ul>
+  </div>
+</section>
+
+<!-- INSTALLATION -->
+<section class="install-section" id="install">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">Get Started</p>
+      <h2 class="section-title">Setup in 30 seconds</h2>
+    </div>
+    <div class="code-block fade-in">
+      <span class="comment"># Clone Forge</span><br>
+      <span class="cmd">git clone</span> https://github.com/rich4rdruizgit/forge.git<br><br>
+      <span class="comment"># Go to your project</span><br>
+      <span class="cmd">cd</span> /your/project<br><br>
+      <span class="comment"># Run the setup script</span><br>
+      <span class="cmd">bash</span> /path/to/forge/setup-project.sh
+    </div>
+    <div class="fade-in">
+      <p style="color:var(--text-muted); font-size:0.95rem; margin-top:2rem; margin-bottom:0.75rem;">Supported tools</p>
+      <div class="badges">
+        <span class="badge">Claude Code</span>
+        <span class="badge">Cursor</span>
+        <span class="badge">Copilot</span>
+        <span class="badge">Windsurf</span>
+        <span class="badge">Gemini CLI</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p class="tagline">Built for teams that ship to production, not to demo.</p>
+  <div class="links">
+    <a href="https://github.com/rich4rdruizgit/forge" target="_blank" rel="noopener">GitHub</a>
+    <span>v0.4</span>
+    <span>Apache 2.0</span>
+  </div>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  /* --- NAV SCROLL --- */
+  const nav = document.getElementById('nav');
+  const hamburger = document.getElementById('hamburger');
+  const navLinks = document.getElementById('navLinks');
+  let lastScroll = 0;
+
+  window.addEventListener('scroll', function() {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  }, { passive: true });
+
+  hamburger.addEventListener('click', function() {
+    navLinks.classList.toggle('open');
+  });
+
+  navLinks.addEventListener('click', function(e) {
+    if (e.target.tagName === 'A') navLinks.classList.remove('open');
+  });
+
+  /* --- INTERSECTION OBSERVER (fade-in) --- */
+  const fadeEls = document.querySelectorAll('.fade-in');
+  const fadeObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        fadeObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  fadeEls.forEach(function(el) { fadeObs.observe(el); });
+
+  /* --- PIPELINE INTERACTIVITY --- */
+  var phases = {
+    new:    { title: 'forge new',    desc: 'Create a new feature from a user story. Forge analyzes complexity, assigns depth, and validates story points before any code is written.' },
+    spec:   { title: 'forge spec',   desc: '7-step conversation protocol. AI asks, never invents. Builds a complete specification through structured dialogue with the developer.' },
+    build:  { title: 'forge build',  desc: 'Tests first (RED), automatic gate validates, then implementation (GREEN). Tests are immutable once written — no retroactive changes allowed.' },
+    verify: { title: 'forge verify', desc: 'Every acceptance criterion verified with evidence. Done coding does not mean done. Each criterion gets a PASS/FAIL with proof.' },
+    close:  { title: 'forge close',  desc: 'Archive the feature and extract knowledge for the next one. Patterns, decisions, and contracts are persisted to KNOWLEDGE.md.' }
+  };
+
+  document.getElementById('pipelineViz').addEventListener('click', function(e) {
+    var step = e.target.closest('.pipeline-step');
+    if (!step) return;
+    var phase = step.dataset.phase;
+    var info = phases[phase];
+    if (!info) return;
+    document.querySelectorAll('.pipeline-step').forEach(function(s) { s.classList.remove('active'); });
+    step.classList.add('active');
+    var desc = document.getElementById('pipelineDesc');
+    desc.innerHTML = '<h4>' + info.title + '</h4><p>' + info.desc + '</p>';
+  });
+
+  /* --- QUALITY SCORE BAR ANIMATION --- */
+  var scoreGrid = document.getElementById('scoreGrid');
+  var scoreObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var bars = entry.target.querySelectorAll('.score-bar-fill');
+        bars.forEach(function(bar) {
+          bar.style.width = bar.dataset.width;
+        });
+        scoreObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.3 });
+  scoreObs.observe(scoreGrid);
+
+  /* --- TERMINAL TYPING ANIMATION --- */
+  var termLines = [
+    { text: '<span class="prompt">$</span> <span class="cmd">forge new</span> <span class="highlight">"Tax badge on product card"</span>', delay: 0 },
+    { text: '', delay: 300 },
+    { text: '<span class="info">&#x1F525; Feature:</span> <span class="highlight">Tax badge on product card</span>', delay: 600 },
+    { text: '<span class="info">&#x1F4CA; Depth:</span>  LIGHT &mdash; UI only, 2 states, isolated', delay: 900 },
+    { text: '<span class="info">&#x1F3AF; Points:</span> 2 &mdash; OK', delay: 1200 },
+    { text: '', delay: 1600 },
+    { text: '<span class="prompt">$</span> <span class="cmd">forge spec</span>', delay: 2000 },
+    { text: '', delay: 2300 },
+    { text: '  <span class="highlight">"The HU says \'show tax badge\'. Is the real problem</span>', delay: 2600 },
+    { text: '  <span class="highlight"> that users can\'t distinguish taxed products?"</span>', delay: 2800 },
+    { text: '', delay: 3200 },
+    { text: '  ... conversation builds the SPEC ...', delay: 3500 },
+    { text: '', delay: 3900 },
+    { text: '  <span class="success">SPEC Quality Score: 9/10 &#x2705;</span>', delay: 4200 },
+    { text: '', delay: 4600 },
+    { text: '<span class="prompt">$</span> <span class="cmd">forge build</span>', delay: 5000 },
+    { text: '', delay: 5300 },
+    { text: '  <span class="info">&#x1F512; Auto-gate RED &rarr; GREEN</span>', delay: 5600 },
+    { text: '  Tests: <span class="highlight">5</span> | AC coverage: <span class="highlight">3/3</span> | Gate: <span class="success">PASSED</span>', delay: 5900 },
+    { text: '', delay: 6300 },
+    { text: '<span class="prompt">$</span> <span class="cmd">forge verify</span> &rarr; <span class="cmd">forge close</span>', delay: 6600 },
+    { text: '', delay: 6900 },
+    { text: '<span class="success">&#x2705; Feature archived. KNOWLEDGE.md updated.</span>', delay: 7200 }
+  ];
+
+  var termBody = document.getElementById('termBody');
+  var termPlayed = false;
+
+  function playTerminal() {
+    if (termPlayed) return;
+    termPlayed = true;
+    termBody.innerHTML = '';
+    termLines.forEach(function(line, i) {
+      var div = document.createElement('div');
+      div.className = 'terminal-line';
+      div.innerHTML = line.text || '&nbsp;';
+      termBody.appendChild(div);
+      setTimeout(function() { div.classList.add('show'); }, line.delay);
+    });
+  }
+
+  var termObs = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        playTerminal();
+        termObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.25 });
+  termObs.observe(document.getElementById('terminal'));
+
+})();
+</script>
+</body>
+</html>
