@@ -284,23 +284,6 @@ The score adapts to what EXISTS:
 - Score ≥ 7 → "SPEC listo para `forge approve`"
 - Score < 7 → list corrections needed by pillar, offer to fix
 
-### Persist to forge-memory
-
-After computing Quality Score, if `forge_memory_available`:
-Call `forge_mem_save` with:
-- title: `"SPEC: {slug}"`
-- type: `"spec-result"`
-- topic_key: `"forge/{slug}/spec"`
-- content:
-  ```
-  quality_score: {X}/10
-  pillar_scores: { P1: X, P2: X, P3: X, P4: X, P5: X }
-  depth: {LIGERA/MEDIA/PROFUNDA}
-  acs: [{id, title}]
-  tech_decisions: [{id, decision}]
-  patterns_applied: [{pattern, source}]
-  ```
-
 ### Quality Score Block (appended to SPEC.md)
 
 ```markdown

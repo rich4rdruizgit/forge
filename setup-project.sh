@@ -402,7 +402,7 @@ done
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔥 Forge v0.4 configurado en este proyecto."
+echo "🔥 Forge v0.5 configurado en este proyecto."
 echo ""
 echo "Próximos pasos:"
 echo "  1. Editá .forge/config.yaml con tu stack"
