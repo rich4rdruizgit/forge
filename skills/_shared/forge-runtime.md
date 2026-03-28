@@ -5,6 +5,23 @@
 
 ---
 
+## R0 — forge-memory Session
+
+**Purpose**: Load feature context from forge-memory at session start. Replaces loading `KNOWLEDGE.md` entirely — knowledge is retrieved on-demand, only what's relevant.
+
+1. Attempt `forge_mem_context` call (project: `{slug}` if active feature, otherwise `"forge-global"`)
+   - If the tool is unavailable or errors → set `forge_memory_available: false`, skip to R1 silently
+   - If available → set `forge_memory_available: true`
+2. Call `forge_mem_session_start(project: {slug or "forge-global"})`
+3. If active feature exists (slug non-null in FORGE.md):
+   - Call `forge_mem_feature_context(slug)` to load relevant context for this feature
+   - If results found: output a concise 2-3 line summary — do NOT dump everything
+4. Proceed to R1
+
+**Fallback rule**: If `forge_memory_available: false`, every skill that would call forge-memory MUST fall back to reading `.forge/KNOWLEDGE.md` file instead. Never error. Never warn the dev about MCP unavailability unless the command is explicitly `forge ref` or `forge new`.
+
+---
+
 ## R1 — Read config
 
 Read `.forge/config.yaml` from the project root. Handle BOTH formats:

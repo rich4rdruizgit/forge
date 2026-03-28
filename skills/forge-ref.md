@@ -31,7 +31,7 @@ Consultar features cerradas como referencia canónica. Buscar por nombre, tag, p
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R1–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
 
 ---
 
@@ -57,18 +57,22 @@ c. Match query against these fields (case-insensitive):
    - ACs implementados (AC titles)
    - Resumen ejecutivo (free text)
 
-### Step REF2.5 — KNOWLEDGE.md search
+### Step REF2.5 — forge-memory knowledge search
 
+**If `forge_memory_available` (R0 succeeded):**
+1. Call `forge_mem_knowledge_search(query)` → returns semantically indexed entries from all closed features
+2. Call `forge_mem_search(query)` → broader search across all saved observations (SPEC results, BUILD results, feature inits)
+3. Store results separately from INDEX.md results, tagged with source `forge-memory`
+4. If no results: declare "forge-memory: sin entradas para '{query}'"
+
+**If NOT available (fallback to file):**
 If `.forge/KNOWLEDGE.md` exists and is non-empty:
 - Search KNOWLEDGE.md for matches against the query in these sections:
-  - **Patrones Establecidos** (pattern names, descriptions)
-  - **Contratos Conocidos** (endpoints, components, interfaces)
-  - **Componentes Reutilizables** (component names, usage context)
-  - **Errores y Lecciones** (error descriptions, lessons learned)
-  - **Decisiones Técnicas Globales** (decision titles, rationale)
-- Store matching entries separately from INDEX.md results, tagged with source `KNOWLEDGE.md`
+  - **Patrones Establecidos**, **Contratos Conocidos**, **Componentes Reutilizables**
+  - **Errores y Lecciones**, **Decisiones Técnicas Globales**
+- Store matching entries tagged with source `KNOWLEDGE.md`
 
-If `.forge/KNOWLEDGE.md` does not exist or is empty, skip this step silently.
+If `.forge/KNOWLEDGE.md` does not exist or is empty, skip silently.
 
 ### Step REF3 — Engram search (if available)
 

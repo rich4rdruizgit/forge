@@ -25,7 +25,7 @@ The 5 Pillars:
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R1–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
 
 ---
 
@@ -56,11 +56,22 @@ The 5 Pillars:
 
 ## Step 1 — Load Context [P2, P4]
 
+Knowledge retrieval is on-demand — no full-file loads into context.
+
+**If `forge_memory_available` (R0 succeeded):**
+1. Call `forge_mem_knowledge_search` with 3-5 keywords from the HU description
+2. Call `forge_mem_knowledge_search("patrones arquitectura {stack}")` — fetch architecture patterns
+3. Call `forge_mem_knowledge_search("contratos componentes")` — fetch known contracts and components
+4. **Present findings to dev** — this is a GATE, not informational
+5. If no results: declare "forge-memory: sin patrones previos — primera feature sin contexto."
+
+**If NOT available (fallback to file):**
 1. Read `KNOWLEDGE.md` from project root
 2. Find: applicable patterns, contracts, reusable components, modules touched
 3. **Present findings to dev** — this is a GATE, not informational
-4. If KNOWLEDGE.md is empty → declare explicitly: "KNOWLEDGE.md está vacío — no hay patrones previos."
-5. Read `profundidad` from FORGE.md (set by `forge new`)
+4. If KNOWLEDGE.md is empty → declare: "KNOWLEDGE.md está vacío — no hay patrones previos."
+
+Read `profundidad` from FORGE.md (set by `forge new`).
 
 Agent MUST present context findings BEFORE asking any SPEC questions. The dev must see what the project already knows before the conversation starts.
 
@@ -272,6 +283,23 @@ The score adapts to what EXISTS:
 
 - Score ≥ 7 → "SPEC listo para `forge approve`"
 - Score < 7 → list corrections needed by pillar, offer to fix
+
+### Persist to forge-memory
+
+After computing Quality Score, if `forge_memory_available`:
+Call `forge_mem_save` with:
+- title: `"SPEC: {slug}"`
+- type: `"spec-result"`
+- topic_key: `"forge/{slug}/spec"`
+- content:
+  ```
+  quality_score: {X}/10
+  pillar_scores: { P1: X, P2: X, P3: X, P4: X, P5: X }
+  depth: {LIGERA/MEDIA/PROFUNDA}
+  acs: [{id, title}]
+  tech_decisions: [{id, decision}]
+  patterns_applied: [{pattern, source}]
+  ```
 
 ### Quality Score Block (appended to SPEC.md)
 

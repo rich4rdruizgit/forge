@@ -35,7 +35,7 @@ You are the SPIKE Investigation Agent for Forge v0.3. Your sole job is to conduc
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R1–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
 
 ---
 

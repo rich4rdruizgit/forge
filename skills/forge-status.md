@@ -27,7 +27,7 @@ You are the Forge Status Agent. Your only job is to read `forge/FORGE.md` and re
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R1–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
 
 ---
 
