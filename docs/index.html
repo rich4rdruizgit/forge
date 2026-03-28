@@ -663,6 +663,7 @@
     <li><a href="#how">How It Works</a></li>
     <li><a href="#depth">Depth</a></li>
     <li><a href="#quality">Quality</a></li>
+    <li><a href="#memory">Memory</a></li>
     <li><a href="#install">Install</a></li>
   </ul>
 </nav>
@@ -922,14 +923,37 @@
     <div class="fade-in">
       <p class="section-label">Project Memory</p>
       <h2 class="section-title">Feature N+1 is easier than Feature N</h2>
+      <p class="section-subtitle">Two complementary layers keep the agent context-safe and the team in sync.</p>
     </div>
+
+    <div class="card-grid fade-in" style="margin-bottom:2rem;">
+      <div class="card">
+        <div class="card-icon">&#x1F9E0;</div>
+        <h3>forge-memory <span style="font-size:0.75rem;color:var(--teal);font-weight:700;margin-left:0.4rem;">MCP</span></h3>
+        <p>Semantic, on-demand retrieval for the agent. Activated at session start (R0). Skills query only what's relevant — never load the full history. Survives context resets.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#x1F4C2;</div>
+        <h3>KNOWLEDGE.md <span style="font-size:0.75rem;color:var(--text-muted);font-weight:700;margin-left:0.4rem;">Git artifact</span></h3>
+        <p>The team's canonical record. Version-controlled, diff-friendly, readable by humans. Updated by <code style="font-family:var(--mono);font-size:0.85em;">forge close</code> after dev approval. Fallback when MCP is unavailable.</p>
+      </div>
+    </div>
+
     <div class="memory-flow fade-in">
       <div class="memory-node">forge close</div>
       <div class="memory-arrow">&rarr;</div>
-      <div class="memory-node highlight-node">KNOWLEDGE.md</div>
+      <div class="memory-node highlight-node">forge-memory</div>
       <div class="memory-arrow">&rarr;</div>
-      <div class="memory-node">forge spec</div>
+      <div class="memory-node">forge new / forge spec</div>
     </div>
+    <div class="memory-flow fade-in" style="margin-top:0.75rem;">
+      <div class="memory-node">forge close</div>
+      <div class="memory-arrow">&rarr;</div>
+      <div class="memory-node" style="border-color:var(--text-muted);">KNOWLEDGE.md</div>
+      <div class="memory-arrow">&rarr;</div>
+      <div class="memory-node">team / git history</div>
+    </div>
+
     <ul class="memory-list fade-in">
       <li><span>&#x1F4D0;</span> Architectural patterns</li>
       <li><span>&#x1F4DD;</span> Design decisions &amp; rationale</li>
@@ -974,7 +998,7 @@
   <p class="tagline">Built for teams that ship to production, not to demo.</p>
   <div class="links">
     <a href="https://github.com/rich4rdruizgit/forge" target="_blank" rel="noopener">GitHub</a>
-    <span>v0.4</span>
+    <span>v0.5</span>
     <span>Apache 2.0</span>
   </div>
 </footer>
@@ -1025,7 +1049,7 @@
     },
     spec: {
       title: 'SPEC', cmd: 'forge spec',
-      inText: 'HU + KNOWLEDGE.md context + stack guide',
+      inText: 'HU + forge-memory context (patterns, contracts, decisions) + stack guide',
       happens: '7-step conversation protocol: anchor to business problem \u2192 work ACs \u2192 validate architecture \u2192 challenge questions \u2192 Quality Score',
       outText: 'SPEC.md with Quality Score \u2265 7/10',
       gate: 'forge approve \u2014 assertions by 5 pillars'
@@ -1048,8 +1072,8 @@
     close: {
       title: 'CLOSE', cmd: 'forge close',
       inText: 'All approved artifacts',
-      happens: 'Archive feature \u2192 extract knowledge candidates \u2192 dev approves each \u2192 update KNOWLEDGE.md',
-      outText: 'INDEX.md + KNOWLEDGE.md updated',
+      happens: 'Archive feature \u2192 extract knowledge candidates \u2192 dev approves each \u2192 update KNOWLEDGE.md \u2192 index to forge-memory',
+      outText: 'INDEX.md + KNOWLEDGE.md updated + forge-memory indexed',
       gate: 'None \u2014 final step'
     }
   };
@@ -1264,7 +1288,7 @@
     { text: '', delay: 6300 },
     { text: '<span class="prompt">$</span> <span class="cmd">forge verify</span> &rarr; <span class="cmd">forge close</span>', delay: 6600 },
     { text: '', delay: 6900 },
-    { text: '<span class="success">&#x2705; Feature archived. KNOWLEDGE.md updated.</span>', delay: 7200 }
+    { text: '<span class="success">&#x2705; Feature archived. KNOWLEDGE.md + forge-memory updated.</span>', delay: 7200 }
   ];
 
   var termBody = document.getElementById('termBody');
