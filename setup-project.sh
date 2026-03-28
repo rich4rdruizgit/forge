@@ -67,6 +67,9 @@ generate_claude_adapter() {
     mkdir -p ".claude/skills/$name"
     cp "$skill_file" ".claude/skills/$name/SKILL.md"
   done
+  # Shared runtime — required by all skills
+  mkdir -p ".claude/skills/_shared"
+  cp ".forge/skills/_shared/"*.md ".claude/skills/_shared/"
   cat > ".claude/CLAUDE.md" <<'CLAUDEMD'
 # Forge — Activo
 
@@ -104,6 +107,8 @@ generate_cursor_adapter() {
     name="$(basename "$skill_file" .md)"
     cp "$skill_file" ".cursor/rules/$name.mdc"
   done
+  # Shared runtime — required by all skills
+  cp ".forge/skills/_shared/forge-runtime.md" ".cursor/rules/_forge-runtime.mdc"
   cat > ".cursor/rules/forge-context.mdc" <<'CURSORMDC'
 ---
 description: Forge methodology — active for all forge commands
@@ -151,6 +156,11 @@ generate_gemini_adapter() {
   # Skills — rewrite .forge/ paths
   for f in ".forge/skills"/forge-*.md; do
     sed 's|\.forge/|.gemini/forge/|g' "$f" > ".gemini/forge/skills/$(basename "$f")"
+  done
+  # Shared runtime — rewrite .forge/ paths
+  mkdir -p ".gemini/forge/skills/_shared"
+  for f in ".forge/skills/_shared/"*.md; do
+    sed 's|\.forge/|.gemini/forge/|g' "$f" > ".gemini/forge/skills/_shared/$(basename "$f")"
   done
 
   # Validation assertions — rewrite .forge/ paths
@@ -203,7 +213,7 @@ cat <<'BANNER'
   ██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔══╝
   ██║     ╚██████╔╝██║  ██║╚██████╔╝███████╗
   ╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
-        AI-Assisted Development Pipeline v0.4
+        AI-Assisted Development Pipeline v0.5
       SPIKE → SPEC → BUILD → VERIFY → CLOSE
 
 BANNER
@@ -266,6 +276,7 @@ mkdir -p .forge/templates && cp "$FORGE_REPO/templates/"*.md .forge/templates/
 mkdir -p .forge/validation && cp "$FORGE_REPO/validation/"*.yaml .forge/validation/
 mkdir -p .forge/stack-skills
 mkdir -p .forge/skills        && cp "$FORGE_REPO/skills/forge-"*.md .forge/skills/
+mkdir -p .forge/skills/_shared && cp "$FORGE_REPO/skills/_shared/"*.md .forge/skills/_shared/
 # Ensure all .forge files are readable (fixes Gemini CLI and other tools)
 chmod -R u+r,go+r .forge/
 echo "✅ .forge/ creado"

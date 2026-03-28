@@ -13,7 +13,7 @@ SPIKE (optional) → SPEC → BUILD (RED → auto-gate → GREEN) → VERIFY →
 
 Each phase produces an **approved artifact** that unlocks the next. No phase skipping. No implementation without approved specs. Philosophy: *think before you code*.
 
-- **Version:** v0.4 (implemented 2026-03-26)
+- **Version:** v0.5 (implemented 2026-03-27)
 - **Author:** doubler
 - **Primary Stack:** Android / KMP (Kotlin)
 - **Repository:** Clean — no uncommitted changes
@@ -249,13 +249,14 @@ All assertion YAML files now group checks under P1–P5 blocks:
 | Phase 1.5 | ✅ Done | Validation and traceability (v0.2) |
 | Phase 1.7 | ✅ Done | Pipeline simplification and SPEC unification (v0.3) |
 | Phase 1.9 | ✅ Done | Pillars, Adaptive Depth, Quality Score, auto-gate, KNOWLEDGE.md (v0.4) |
-| Phase 2 | 🔜 Planned | CLI binary (`forge` as global command with linting) |
-| Phase 3 | 🔜 Planned | MCP Server (Cursor, Zed, VS Code, Claude Desktop) |
+| Phase 2 | ✅ Done | forge-memory MCP — semantic knowledge search, cross-session agent persistence (v0.5) |
+| Phase 3 | 🔜 Planned | CLI binary (`forge` as global command with linting) |
+| Phase 4 | 🔜 Planned | Ecosystem (more stacks, dashboard, Azure/Jira integration) |
 | Phase 4 | 🔜 Planned | Ecosystem (more stacks, dashboard, Azure/Jira integration) |
 
 ---
 
-## File Count (v0.4)
+## File Count (v0.5)
 
 | Category | Files | Notes |
 |----------|-------|-------|
@@ -269,6 +270,21 @@ All assertion YAML files now group checks under P1–P5 blocks:
 | **Total** | **31** | |
 
 ---
+
+## v0.5 Changes Summary
+
+### forge-memory MCP Integration
+
+| Skill | Change |
+|-------|--------|
+| forge-runtime (R0) | NEW: session start + feature context load from forge-memory at startup |
+| forge-new | Phase 3: queries forge_mem_knowledge_search instead of loading full KNOWLEDGE.md; Phase 7: saves feature init |
+| forge-spec | Step 1: queries forge-memory for patterns/contracts; Step 8: saves Quality Score + decisions |
+| forge-build | Saves auto-gate result + BUILD coverage to forge-memory |
+| forge-close | K5 NEW: indexes approved knowledge in forge-memory via forge_mem_knowledge_extract + session summary |
+| forge-ref | REF2.5: queries forge_mem_knowledge_search first; fallback to KNOWLEDGE.md file |
+
+**Key principle**: forge-memory replaces loading KNOWLEDGE.md into context. KNOWLEDGE.md remains the team artifact (git-versioned). forge-memory is the agent's runtime store (semantic, context-safe).
 
 ## v0.4 Changes Summary
 

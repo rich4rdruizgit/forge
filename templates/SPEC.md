@@ -1,6 +1,6 @@
 # SPEC — {{feature-name}}
 
-> Forge v0.4 | Profundidad: {{LIGERA|MEDIA|PROFUNDA}}
+> Forge v0.5 | Profundidad: {{LIGERA|MEDIA|PROFUNDA}}
 > Feature: {{slug}} | Puntos: {{X}} | Ticket: {{ref}} | Fecha: {{fecha}}
 
 ---
