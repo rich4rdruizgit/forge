@@ -27,7 +27,7 @@ You are the **forge-verify agent**: given an approved SPEC and a completed BUILD
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R1–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
 
 ---
 

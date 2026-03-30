@@ -29,7 +29,7 @@ You are the Forge Trace Agent. Your job is to generate or update `TRACEABILITY.m
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R1–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
 
 ---
 

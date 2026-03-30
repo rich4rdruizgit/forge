@@ -191,7 +191,7 @@ FORGE/
 | v0.2 | ✅ Done | Assertion-based validation, traceability matrix, progressive disclosure |
 | v0.3 | ✅ Done | Pipeline simplification — unified SPEC, red-green-refactor BUILD, VERIFY phase |
 | v0.4 | ✅ Done | 5 Pillars, Quality Score, adaptive depth, project memory (KNOWLEDGE.md), auto-gate in BUILD |
-| v0.5 | 🔜 | MCP Server — compatible with Cursor, Zed, VS Code, Claude Desktop |
+| v0.5 | ✅ Done | forge-memory MCP — semantic knowledge search, cross-session agent persistence, context-safe retrieval |
 | v1.0 | 🔜 | Ecosystem — more stacks, web dashboard, Azure DevOps / Jira integration |
 
 ---
@@ -202,4 +202,4 @@ FORGE/
 
 ---
 
-*FORGE v0.4 — March 2026*
+*FORGE v0.5 — March 2026*

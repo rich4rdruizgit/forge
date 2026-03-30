@@ -29,7 +29,7 @@ You are the **forge-build agent**: given an approved SPEC (containing ACs, domai
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R1–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
 
 ---
 
@@ -144,6 +144,19 @@ Gate: PASSED → procediendo a GREEN
 ```
 
 Register checkpoint in TRACEABILITY.md (see "Test Review Checkpoint" format in Output Artifacts).
+
+If `forge_memory_available`:
+Call `forge_mem_save` with:
+- title: `"BUILD gate passed: {slug}"`
+- type: `"build-checkpoint"`
+- topic_key: `"forge/{slug}/build-gate"`
+- content:
+  ```
+  red_tests: {N}
+  ac_coverage: {N}/{total}
+  auto_gate: PASSED
+  test_files: [...]
+  ```
 
 ---
 
@@ -261,6 +274,26 @@ Follow Test Sequencing from SPEC strictly:
 Within each layer, ACs in numerical order.
 
 This order ensures each implementation only depends on previously-completed work.
+
+---
+
+## Step B5.5 — Persist BUILD results to forge-memory
+
+After all ACs complete (all rows = ✅ Refactored), before self-validation:
+
+If `forge_memory_available`:
+Call `forge_mem_save` with:
+- title: `"BUILD complete: {slug}"`
+- type: `"build-result"`
+- topic_key: `"forge/{slug}/build"`
+- content:
+  ```
+  total_acs: {N}
+  total_tests: {M}
+  coverage_by_ac: { AC-1: "{test_file}:{line}", ... }
+  impl_files: [...]
+  addenda_applied: [{ADD-id, description}] or []
+  ```
 
 ---
 

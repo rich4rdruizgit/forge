@@ -27,7 +27,7 @@ Closes a completed feature cycle: validates all required phases are `✅ Aprobad
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R1–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
 
 ---
 
@@ -92,6 +92,37 @@ ONLY write entries approved by the dev. Add to the corresponding section of KNOW
 Update "Última actualización" header.
 
 **Rule**: NEVER write to KNOWLEDGE.md without explicit dev approval per entry.
+
+#### Step K5 — Index in forge-memory
+
+After K4 writes approved entries to KNOWLEDGE.md, if `forge_memory_available`:
+
+1. Call `forge_mem_knowledge_extract` with:
+   ```
+   feature: {slug}
+   entries: {approved entries from K4}
+   ```
+   → This indexes the knowledge semantically. Future `forge new` and `forge spec` will query this instead of loading the full KNOWLEDGE.md file.
+
+2. Call `forge_mem_session_summary` with:
+   ```
+   goal: "Feature cerrada: {title}"
+   accomplished:
+     - {N} ACs implementados
+     - Quality Score SPEC: {X}/10
+     - Patterns applied: {list from K4}
+   discoveries:
+     - {entries from "Errores y Lecciones" approved in K4}
+   next_steps: []
+   relevant_files:
+     - .forge/features/closed/{slug}/SPEC.md
+     - .forge/features/closed/{slug}/TRACEABILITY.md
+     - .forge/features/closed/{slug}/VERIFY.md
+   ```
+
+3. Call `forge_mem_session_end(project: {slug})`
+
+If forge-memory is NOT available → skip K5 silently. KNOWLEDGE.md is the sole store in that case.
 
 ### Step C3 — Create closed folder if needed
 Check if `.forge/features/closed/` exists. If not: create it. Not an error.

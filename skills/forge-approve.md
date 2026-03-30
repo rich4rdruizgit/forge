@@ -36,7 +36,7 @@ Before executing anything, verify ALL of these:
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R1–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
 
 ---
 
@@ -189,6 +189,26 @@ Siguiente fase: {NEXT_PHASE} — ejecutá `forge {next-command}` para continuar.
 ```
 
 Where `next-command` maps as: SPEC→`forge spec`, BUILD→`forge build`, VERIFY→`forge verify`, null→`forge close`.
+
+**Write 6 — Persist to forge-memory (SPEC only)**
+
+If `fase_actual == SPEC` AND `forge_memory_available`:
+Read the approved SPEC.md and call `forge_mem_save` with:
+- title: `"SPEC aprobado: {slug}"`
+- type: `"spec-result"`
+- topic_key: `"forge/{slug}/spec"`
+- content:
+  ```
+  quality_score: {X}/10
+  pillar_scores: { P1: X, P2: X, P3: X, P4: X, P5: X }
+  depth: {LIGERA/MEDIA/PROFUNDA}
+  acs: [{id, title}]
+  tech_decisions: [{id, decision}]
+  patterns_applied: [{pattern, source}]
+  validation_score: {blocker_score}%
+  ```
+
+If `forge_memory_available` is false: skip silently.
 
 ---
 

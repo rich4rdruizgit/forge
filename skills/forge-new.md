@@ -36,7 +36,7 @@ Before executing anything, verify ALL of these:
 
 ## Forge Runtime
 
--> Execute `_shared/forge-runtime.md` steps R1-R4 before any skill-specific logic.
+-> Execute `_shared/forge-runtime.md` steps R0-R4 before any skill-specific logic.
 
 ---
 
@@ -86,15 +86,24 @@ Determine depth: **LIGERA** / **MEDIA** / **PROFUNDA**
 
 ---
 
-## Phase 3 — Consult KNOWLEDGE.md
+## Phase 3 — Consult forge-memory
 
+Knowledge retrieval is on-demand and context-safe — no full-file loads.
+
+**If `forge_memory_available` (R0 succeeded):**
+1. Extract 3-5 keywords from the HU title and description
+2. Call `forge_mem_knowledge_search(keywords)` — finds indexed entries from past features
+3. Call `forge_mem_feature_context(slug)` — finds similar past features by context
+4. Present findings to the dev with specific references
+5. If no results: output `"forge-memory: sin entradas relevantes para esta feature."`
+
+**If NOT available (fallback to file):**
 If `.forge/KNOWLEDGE.md` exists and has content:
 1. Search for similar past features in "Modulos Tocados" and "Componentes Reutilizables"
 2. Find applicable patterns in "Patrones Establecidos" and "Decisiones Tecnicas Globales"
 3. Find relevant contracts in "Contratos Conocidos"
 4. Find related errors/lessons in "Errores y Lecciones"
 5. Present findings to the dev with specific references
-
 If KNOWLEDGE.md is empty or missing:
 ```
 KNOWLEDGE.md vacio — primera feature sin contexto previo.
@@ -199,7 +208,24 @@ Replace the phase table with:
 | VERIFY | — | Sin iniciar |
 ```
 
-**Step 7 — Return envelope**
+**Step 7 — Persist feature init to forge-memory**
+If `forge_memory_available`:
+Call `forge_mem_save` with:
+- title: `"Feature init: {title}"`
+- type: `"feature-context"`
+- topic_key: `"forge/{slug}/init"`
+- content:
+  ```
+  slug: {slug}
+  depth: {LIGERA/MEDIA/PROFUNDA}
+  ticket_id: {ticket_id or null}
+  hu_summary: {1-line HU summary}
+  story_points: {X or null}
+  depth_justification: {1-line from Phase 2 axes}
+  knowledge_refs: {list of relevant forge-memory entries found in Phase 3, or []}
+  ```
+
+**Step 8 — Return envelope**
 Output the return envelope (see Return Envelope section).
 
 ---
