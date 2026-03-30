@@ -98,6 +98,112 @@ Stack y modelos: `.forge/config.yaml`
 Los skills se cargan automáticamente desde `.claude/skills/`.
 CLAUDEMD
   echo "  ✅ Claude adapter generado"
+  configure_claude_security
+}
+
+configure_claude_security() {
+  local settings_file=".claude/settings.json"
+  mkdir -p ".claude"
+
+  # Sensitive file deny rules — Read + Write + Edit (subdirs included) + Bash
+  local deny_rules
+  deny_rules=$(cat <<'EOF'
+[
+  "Read(**/.env)", "Write(**/.env)", "Edit(**/.env)",
+  "Read(**/.env.*)", "Write(**/.env.*)", "Edit(**/.env.*)",
+  "Read(**/*.key)", "Write(**/*.key)",
+  "Read(**/*.pem)", "Write(**/*.pem)",
+  "Read(**/*.p12)", "Write(**/*.p12)",
+  "Read(**/*.pfx)", "Write(**/*.pfx)",
+  "Read(**/*secret*)", "Write(**/*secret*)",
+  "Read(**/*credential*)", "Write(**/*credential*)",
+  "Read(**/*.token)",
+  "Read(**/local.properties)", "Write(**/local.properties)", "Edit(**/local.properties)",
+  "Read(**/google-services.json)", "Write(**/google-services.json)",
+  "Read(**/*.jks)", "Write(**/*.jks)",
+  "Read(**/*.keystore)", "Write(**/*.keystore)",
+  "Read(**/*signing*.properties)", "Write(**/*signing*.properties)",
+  "Bash(cat .env*)",
+  "Bash(cat */.env*)",
+  "Bash(cat local.properties)",
+  "Bash(cat google-services.json)",
+  "Bash(cat *.key)",
+  "Bash(cat *.pem)",
+  "Bash(cat *.jks)",
+  "Bash(cat *.keystore)",
+  "Bash(env)",
+  "Bash(printenv)",
+  "Bash(grep * .env*)",
+  "Bash(grep * local.properties)"
+]
+EOF
+)
+
+  if [ -f "$settings_file" ]; then
+    # Merge: add deny rules without overwriting existing config
+    python3 - "$settings_file" <<PYEOF
+import json, sys
+
+path = sys.argv[1]
+with open(path) as f:
+    config = json.load(f)
+
+new_rules = $deny_rules
+
+perms = config.setdefault("permissions", {})
+existing = perms.get("deny", [])
+merged = existing + [r for r in new_rules if r not in existing]
+perms["deny"] = merged
+
+with open(path, "w") as f:
+    json.dump(config, f, indent=2)
+PYEOF
+    echo "  ✅ Reglas de seguridad mergeadas en $settings_file"
+  else
+    # Create fresh settings.json with security rules
+    python3 - <<PYEOF
+import json
+rules = $deny_rules
+config = {"permissions": {"deny": rules}}
+with open("$settings_file", "w") as f:
+    json.dump(config, f, indent=2)
+PYEOF
+    echo "  ✅ $settings_file creado con reglas de seguridad"
+  fi
+
+  # Security banner for the dev
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "🔒 SEGURIDAD — Revisá antes de continuar"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "  Forge configuró restricciones de acceso en:"
+  echo "  📄 $settings_file"
+  echo ""
+  echo "  Archivos protegidos en cualquier directorio del proyecto:"
+  echo "  • .env / .env.*"
+  echo "  • *.key / *.pem / *.p12 / *.pfx"
+  echo "  • *secret* / *credential* / *.token"
+  echo "  • local.properties"
+  echo "  • google-services.json"
+  echo "  • *.jks / *.keystore / *signing*.properties"
+  echo ""
+  echo "  Comandos Bash bloqueados:"
+  echo "  • cat .env* / cat local.properties / cat google-services.json"
+  echo "  • env / printenv"
+  echo "  • grep sobre archivos de entorno"
+  echo ""
+  echo "  ⚠️  Si tu proyecto tiene archivos sensibles con otros"
+  echo "     nombres, agregálos manualmente en:"
+  echo "     $settings_file → permissions.deny"
+  echo ""
+  echo "  ⚠️  Estas reglas aplican solo a Claude Code. Si usás"
+  echo "     Cursor, Copilot o Windsurf, configurá restricciones"
+  echo "     equivalentes en esas herramientas manualmente."
+  echo ""
+  echo "  📖 Documentación: https://docs.anthropic.com/claude-code/settings"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
 }
 
 generate_cursor_adapter() {
