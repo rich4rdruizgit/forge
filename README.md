@@ -93,6 +93,38 @@ Then from any project:
 cd /your/project && forge-install
 ```
 
+### forge-memory (recommended)
+
+forge-memory is a standalone MCP server that gives the Forge agent persistent, semantic memory across sessions and features. Without it, the agent relies only on `KNOWLEDGE.md` as fallback context.
+
+**Install:**
+
+```bash
+# Requires Python 3.11+ and uv
+git clone https://github.com/richardhapb/forge-memory.git
+cd forge-memory
+uv sync
+```
+
+**Configure Claude Code** — create `~/.claude/mcp/forge-memory.json`:
+
+```json
+{
+  "command": "uv",
+  "args": ["--directory", "/path/to/forge-memory", "run", "forge-memory"]
+}
+```
+
+**Verify it works** — restart Claude Code, then run:
+
+```
+forge status
+```
+
+If forge-memory is active you'll see context loaded at session start. If not, the agent falls back to `KNOWLEDGE.md` silently — the pipeline still works.
+
+---
+
 ### Configure your stack
 
 Edit `.forge/config.yaml`:
