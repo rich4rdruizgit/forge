@@ -134,7 +134,25 @@ configure_claude_security() {
   "Bash(env)",
   "Bash(printenv)",
   "Bash(grep * .env*)",
-  "Bash(grep * local.properties)"
+  "Bash(grep * local.properties)",
+  "Bash(rm -rf*)",
+  "Bash(rm -f *)",
+  "Bash(git reset --hard*)",
+  "Bash(git push --force*)",
+  "Bash(git push -f*)",
+  "Bash(git clean -fd*)",
+  "Write(.claude/settings.json)",
+  "Edit(.claude/settings.json)",
+  "Write(.claude/CLAUDE.md)",
+  "Edit(.claude/CLAUDE.md)",
+  "Write(.github/workflows/*)",
+  "Edit(.github/workflows/*)",
+  "Write(Jenkinsfile)",
+  "Edit(Jenkinsfile)",
+  "Write(Dockerfile)",
+  "Edit(Dockerfile)",
+  "Write(docker-compose*.yml)",
+  "Edit(docker-compose*.yml)"
 ]
 EOF
 )
@@ -190,8 +208,14 @@ PYEOF
   echo ""
   echo "  Comandos Bash bloqueados:"
   echo "  • cat .env* / cat local.properties / cat google-services.json"
-  echo "  • env / printenv"
-  echo "  • grep sobre archivos de entorno"
+  echo "  • env / printenv / grep sobre archivos de entorno"
+  echo "  • rm -rf / rm -f"
+  echo "  • git reset --hard / git push --force / git clean -fd"
+  echo ""
+  echo "  Archivos de configuración protegidos (solo escritura/edición):"
+  echo "  • .claude/settings.json y .claude/CLAUDE.md"
+  echo "  • .github/workflows/* / Jenkinsfile"
+  echo "  • Dockerfile / docker-compose*.yml"
   echo ""
   echo "  ⚠️  Si tu proyecto tiene archivos sensibles con otros"
   echo "     nombres, agregálos manualmente en:"
