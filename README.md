@@ -106,16 +106,12 @@ cd forge-memory
 uv sync
 ```
 
-**Configure Claude Code** — add to `~/.claude/claude_desktop_config.json`:
+**Configure Claude Code** — create `~/.claude/mcp/forge-memory.json`:
 
 ```json
 {
-  "mcpServers": {
-    "forge-memory": {
-      "command": "uv",
-      "args": ["--directory", "/path/to/forge-memory", "run", "forge-memory"]
-    }
-  }
+  "command": "uv",
+  "args": ["--directory", "/path/to/forge-memory", "run", "forge-memory"]
 }
 ```
 

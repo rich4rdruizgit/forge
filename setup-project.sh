@@ -537,24 +537,19 @@ echo ""
 
 # Check forge-memory MCP status (Claude Code only)
 if [[ " ${DETECTED[*]} " == *" claude "* ]]; then
-  local mcp_config="$HOME/.claude/claude_desktop_config.json"
-  if [ -f "$mcp_config" ] && python3 -c "
-import json, sys
-with open(sys.argv[1]) as f:
-    c = json.load(f)
-sys.exit(0 if 'forge-memory' in c.get('mcpServers', {}) else 1)
-" "$mcp_config" 2>/dev/null; then
+  local mcp_file="$HOME/.claude/mcp/forge-memory.json"
+  if [ -f "$mcp_file" ]; then
     echo "✅ forge-memory: configurado"
   else
     echo "⚠️  forge-memory no detectado — memoria semántica no disponible."
     echo ""
     echo "   Para activarla:"
     echo "   1. git clone https://github.com/richardhapb/forge-memory.git"
-    echo "   2. Agregá a ~/.claude/claude_desktop_config.json:"
-    echo '      { "mcpServers": { "forge-memory": {'
-    echo '          "command": "uv",'
-    echo '          "args": ["--directory", "/path/to/forge-memory", "run", "forge-memory"]'
-    echo '      }}}'
+    echo "   2. Creá el archivo ~/.claude/mcp/forge-memory.json:"
+    echo '      {'
+    echo '        "command": "uv",'
+    echo '        "args": ["--directory", "/path/to/forge-memory", "run", "forge-memory"]'
+    echo '      }'
     echo "   3. Reiniciá Claude Code"
     echo ""
     echo "   Sin forge-memory Forge usa KNOWLEDGE.md como fallback — el pipeline funciona igual."
