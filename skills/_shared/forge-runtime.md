@@ -10,15 +10,46 @@
 **Purpose**: Load feature context from forge-memory at session start. Replaces loading `KNOWLEDGE.md` entirely — knowledge is retrieved on-demand, only what's relevant.
 
 1. Attempt `forge_mem_context` call (project: `{slug}` if active feature, otherwise `"forge-global"`)
-   - If the tool is unavailable or errors → set `forge_memory_available: false`, skip to R1 silently
+   - If the tool is unavailable or errors → set `forge_memory_available: false`, skip to step 3
    - If available → set `forge_memory_available: true`
 2. Call `forge_mem_session_start(project: {slug or "forge-global"})`
-3. If active feature exists (slug non-null in FORGE.md):
-   - Call `forge_mem_feature_context(slug)` to load relevant context for this feature
-   - If results found: output a concise 2-3 line summary — do NOT dump everything
-4. Proceed to R1
+   - If active feature exists (slug non-null in FORGE.md):
+     - Call `forge_mem_feature_context(slug)` to load relevant context
+     - If results found AND non-empty: output a concise 2-3 line summary — do NOT dump everything
+     - If results empty → treat as forge_memory_available: false for context recovery (go to step 3)
+3. Proceed to R1
 
-**Fallback rule**: If `forge_memory_available: false`, every skill that would call forge-memory MUST fall back to reading `.forge/KNOWLEDGE.md` file instead. Never error. Never warn the dev about MCP unavailability unless the command is explicitly `forge ref` or `forge new`.
+### Fallback — Artifact-based context recovery
+
+Trigger this fallback when:
+- `forge_memory_available: false` (MCP unavailable), OR
+- forge-memory returned empty context for an active feature (context was never saved or was lost)
+
+**Recovery steps** (execute silently, no warnings to dev):
+
+1. Read `FORGE.md` → extract `feature`, `slug`, `fase_actual`, phase table states
+2. Based on `fase_actual`, read the relevant artifact:
+   - `SPEC` → read `.forge/features/activo/{slug}/SPEC.md` (ACs, depth, tech decisions)
+   - `BUILD` → read `.forge/features/activo/{slug}/SPEC.md` + `TRACEABILITY.md` (which ACs are done)
+   - `VERIFY` → read `.forge/features/activo/{slug}/SPEC.md` + `TRACEABILITY.md` + `VALIDATION-BUILD.md`
+   - `CLOSE` → read all above + `VALIDATION-VERIFY.md`
+3. Construct a working context from those files — treat it as the session context going forward
+4. Output a recovery briefing:
+
+```
+🔥 {feature} ({slug}) — {fase_actual} 🔄
+
+📋 ACs:
+  AC-1: {title}  {✅ done / ⏳ pending}
+  AC-2: {title}  {✅ done / ⏳ pending}
+  ...
+
+▶ Siguiente: {next action based on fase_actual}
+```
+
+This ensures the agent always has working context regardless of forge-memory availability.
+
+**Fallback rule for skills**: If `forge_memory_available: false`, every skill that would call forge-memory MUST fall back to reading `.forge/KNOWLEDGE.md` file instead. Never error on MCP unavailability.
 
 ---
 
