@@ -84,9 +84,64 @@ ACs completados: {M}/{total}
 
 ---
 
+## Step B3.5 — Load Test Budget
+
+Load test budget from `config.yaml → testing`:
+
+1. Read `testing.presupuesto.{profundidad}` for current feature depth (from FORGE.md)
+2. Read `testing.piramide` for pyramid constraints
+3. Read `testing.tagging` for speed tagging rules
+4. Read SPEC Section 14 (Test Budget & Pirámide) for planned test distribution
+
+Store budget limits:
+```
+Budget {PROFUNDIDAD}:
+  unit: {min}-{max}
+  integration: {min}-{max}
+  ui: {min}-{max}
+  pyramid: unit ≥{N}% | integration ≤{N}% | ui ≤{N}%
+  tagging: {enabled/disabled}
+```
+
+If `testing` section missing in config.yaml → use defaults:
+- LIGERA: unit 3-8, integration 0-2, ui 0-1
+- MEDIA: unit 5-12, integration 1-3, ui 0-2
+- PROFUNDA: unit 10-20, integration 2-5, ui 1-3
+
+⚠️ If SPEC Section 14 budget exceeds config limits, WARN the dev before proceeding.
+
+---
+
 ## Step B4 — Phase RED: Generate ALL Tests
 
 Generate ALL tests for ALL ACs before writing any implementation code. Zero implementation code in this phase.
+
+### Budget-Aware Test Generation
+
+Apply the **Minimal Viable Test** principle: each test must justify its existence.
+
+**Per AC, generate:**
+1. **ONE happy path test** (mandatory) — verifies the Given/When/Then from SPEC
+2. **Edge case tests ONLY when risk is real** — null inputs, empty collections, concurrency, error states that could reach production
+3. **NO redundant tests** — if AC-2's happy path already exercises AC-1's domain logic, don't duplicate coverage
+
+**Pyramid enforcement:**
+- Start with unit tests (target ≥70% of total)
+- Add integration tests ONLY for real integration points (DB, API, cross-module)
+- Add UI tests ONLY for critical happy paths that MUST NOT break in production
+- If a behavior can be verified at the unit level, do NOT add an integration or UI test for it
+
+**Tagging (if `testing.tagging.enabled`):**
+Each test gets a speed tag based on expected execution time:
+- `@Tag("fast")` — pure logic, no I/O, < 100ms
+- `@Tag("medium")` — mocked I/O or coroutine tests, < 2s
+- `@Tag("slow")` — real I/O, Compose UI tests, > 2s
+
+**Budget check:** After generating all tests, verify:
+- Total tests within budget range for current depth
+- Pyramid distribution within configured limits
+- If over budget → identify and remove lowest-value tests (those that duplicate coverage)
+- If under minimum → identify untested risk areas
 
 For each AC in order from Test Sequencing in SPEC, starting from the continuation point:
 
@@ -105,12 +160,23 @@ Output per AC:
 🔴 RED — AC-{N}: {AC title}
 Test: {test file path}
 Test case(s): {test method names}
+Layer: {unit|integration|ui}
+Tag: {@fast|@medium|@slow}
+Justificación: {qué bug previene este test}
 Estado: FAILING (no implementation yet)
 ```
 
 After ALL ACs have tests, output summary:
 ```
 🔴 Phase RED complete — {N} ACs, {M} tests generated
+
+📊 Test Budget Report:
+  Budget ({PROFUNDIDAD}): unit {min}-{max}, integration {min}-{max}, ui {min}-{max}
+  Actual: unit {N} ({P}%), integration {N} ({P}%), ui {N} ({P}%)
+  Pyramid: {✅|⚠️} unit ≥70% | integration ≤20% | ui ≤10%
+  Budget: {✅ Within range|⚠️ Over by N|⚠️ Under minimum by N}
+  Tags: @fast {N} | @medium {N} | @slow {N}
+
 Procediendo a auto-gate...
 ```
 
@@ -126,6 +192,10 @@ After generating ALL tests, the agent automatically validates:
 | Behavior | Each test verifies behavior, not implementation |
 | Error Scenarios | Error cases from SPEC have tests |
 | Mock Depth | 0 tests mock more than 2 layers |
+| Budget Compliance | Total tests within budget range for depth |
+| Pyramid Ratio | unit ≥70%, integration ≤20%, ui ≤10% |
+| No Duplicate Coverage | No two tests verify the exact same behavior |
+| Test Justification | Each test has explicit justification |
 
 **Gate FAILS** → BLOCK. List what's missing. Do NOT proceed to GREEN.
 
@@ -139,6 +209,8 @@ Cobertura ACs: N/N
 Tests de comportamiento: ✅
 Escenarios de error: ✅
 Mock depth ≤ 2: ✅
+Budget compliance: ✅ ({N} tests, range {min}-{max})
+Pyramid ratio: ✅ (unit {P}% | integration {P}% | ui {P}%)
 
 Gate: PASSED → procediendo a GREEN
 ```
@@ -429,6 +501,14 @@ Violación de esta regla = BUILD inválido. El AC debe rehacerse desde RED.
 - Si el stack skill define convenciones que difieren de tus defaults → el stack skill gana
 - Los tests de UI deben cubrir todos los estados del UI Contract (loading, success, error, empty)
 - Los tests de interacción deben cubrir todos los gestures del UI Contract
+
+### Test Efficiency
+- NUNCA generar tests que dupliquen cobertura de otro test
+- SIEMPRE justificar cada test: "¿Qué bug previene que ningún otro cubre?"
+- PREFERIR unit tests sobre integration tests, integration sobre UI
+- Si un comportamiento se puede verificar con un unit test, NO agregar integration o UI test para lo mismo
+- Budget es un RANGO, no un target — estar en el mínimo es perfectamente válido si la cobertura es completa
+- Tests de UI SOLO para happy paths críticos que no se pueden verificar en capas inferiores
 
 ### Error cases
 

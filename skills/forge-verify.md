@@ -124,6 +124,34 @@ For each navigation route from SPEC UI Contract:
 
 ---
 
+## Step V5.5 — Test Efficiency Analysis
+
+Evaluate test efficiency against configured budget:
+
+1. **Count tests by layer**: unit, integration, ui
+2. **Load budget**: `config.yaml → testing.presupuesto.{profundidad}`
+3. **Calculate pyramid**: actual % per layer vs configured limits
+4. **Detect duplicates**: tests that verify the same behavior across layers
+5. **Verify tagging**: each test has @fast/@medium/@slow tag (if enabled)
+6. **Estimate CI impact**: total estimated test time based on tags
+
+Generate efficiency report:
+```
+📊 Test Efficiency:
+  Total tests: {N} (budget: {min}-{max})
+  Pyramid: unit {N} ({P}%) | integration {N} ({P}%) | ui {N} ({P}%)
+  Pyramid compliance: {✅|⚠️}
+  Duplicate coverage: {N} potential duplicates
+  Tagging: {N}/{total} tagged
+  Estimated CI time: @fast {T}s + @medium {T}s + @slow {T}s = {total}s
+  PR pipeline (@fast + @medium): ~{T}s
+```
+
+If duplicates found, list them with recommendation to remove.
+If pyramid violated, list tests that should move to a lower layer.
+
+---
+
 ## Step V6 — Check SPEC Addenda
 
 If SPEC.md has an `## Addenda` section:
@@ -211,6 +239,24 @@ Los siguientes gaps fueron detectados:
 No se detectaron gaps. La implementación cubre completamente el SPEC.
 {{/if}}
 
+## Test Efficiency
+| Métrica | Configurado | Actual | Estado |
+|---------|-------------|--------|--------|
+| Total tests | {min}-{max} | {N} | {✅\|⚠️} |
+| Unit (≥{N}%) | ≥{config}% | {actual}% | {✅\|⚠️} |
+| Integration (≤{N}%) | ≤{config}% | {actual}% | {✅\|⚠️} |
+| UI (≤{N}%) | ≤{config}% | {actual}% | {✅\|⚠️} |
+| Tests con tag | 100% | {actual}% | {✅\|⚠️} |
+| Duplicados detectados | 0 | {N} | {✅\|⚠️} |
+
+### CI Impact Estimate
+| Tag | Tests | Tiempo estimado | Pipeline |
+|-----|-------|-----------------|----------|
+| @fast | {N} | ~{T}s | Cada push |
+| @medium | {N} | ~{T}s | PR |
+| @slow | {N} | ~{T}s | Nightly |
+| **PR total** | **{N}** | **~{T}s** | — |
+
 ## Summary
 
 | Categoría | Cubiertos | Total | Porcentaje |
@@ -222,6 +268,9 @@ No se detectaron gaps. La implementación cubre completamente el SPEC.
 | Navigation | {N} | {N} | {%} |
 | Addenda | {N} | {N} | {%} |
 | **TOTAL** | **{N}** | **{N}** | **{%}** |
+| Test Efficiency | {budget status} | — | — |
+| Pyramid | {compliance} | — | — |
+| CI PR Time | ~{T}s | ≤{max_pr_test_time_s}s | {✅\|⚠️} |
 
 **Veredicto**: {✅ Verificado | ❌ Gaps encontrados}
 ```

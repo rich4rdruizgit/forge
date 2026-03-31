@@ -60,6 +60,25 @@ auto_gate:
         Tests con mock depth > 2 prueban infraestructura de mocks, no comportamiento.
       evidence_hint: "Mock depth de cada test"
 
+    - id: P3-BUILD-AG-005
+      pillar: P3
+      description: "Budget compliance"
+      severity: warning
+      phase: auto-gate
+      verification: |
+        Total de tests dentro del rango configurado para la profundidad actual.
+      evidence_hint: "Contar tests por capa, comparar con testing.presupuesto.{profundidad}."
+
+    - id: P3-BUILD-AG-006
+      pillar: P3
+      description: "Pyramid ratio"
+      severity: warning
+      phase: auto-gate
+      verification: |
+        Distribución respeta unit ≥70%, integration ≤20%, ui ≤10%
+        (o valores de config.yaml → testing.piramide).
+      evidence_hint: "Calcular porcentaje por capa del total de tests."
+
 # ─────────────────────────────────────────────
 # P1 — Problema de Negocio
 # ¿Los tests validan lo que pide el ticket?
@@ -212,6 +231,86 @@ pillars:
           El código nuevo no tiene comentarios TODO, FIXME o HACK sin resolución
           documentada. Si hay un TODO válido, debe tener ticket de Azure DevOps.
         evidence_hint: "TODOs en código nuevo"
+
+  # ────────────────────────────────────────────────────
+  # P-EFF — Eficiencia de Testing
+  # ────────────────────────────────────────────────────
+
+  - pillar: PEFF
+    name: Eficiencia de Testing
+    assertions:
+      - id: PEFF-BUILD-001
+        pillar: PEFF
+        description: "Budget compliance"
+        severity: warning
+        verification: |
+          El número total de tests está dentro del rango definido en
+          config.yaml → testing.presupuesto.{profundidad}.
+        evidence_hint: >
+          Contar tests generados por capa (unit/integration/ui) y comparar
+          con el rango configurado. Listar tests por capa con conteo.
+        notes: >
+          Estar en el mínimo del rango es válido si la cobertura de ACs es completa.
+          Solo es blocker si se excede el máximo por más del 50%.
+
+      - id: PEFF-BUILD-002
+        pillar: PEFF
+        description: "Pyramid distribution"
+        severity: warning
+        verification: |
+          La distribución de tests respeta la pirámide:
+          unit ≥ testing.piramide.unit_min_pct%,
+          integration ≤ testing.piramide.integration_max_pct%,
+          ui ≤ testing.piramide.ui_max_pct%.
+        evidence_hint: >
+          Calcular porcentaje por capa. Mostrar distribución actual vs configurada.
+
+      - id: PEFF-BUILD-003
+        pillar: PEFF
+        description: "No duplicate coverage"
+        severity: warning
+        verification: |
+          No existen dos tests que verifiquen exactamente el mismo comportamiento
+          en la misma o diferente capa.
+        evidence_hint: >
+          Para cada par de tests en el mismo AC, verificar que cubren
+          comportamientos distintos (happy path vs edge case, o diferentes edge cases).
+          Listar duplicados encontrados.
+
+      - id: PEFF-BUILD-004
+        pillar: PEFF
+        description: "Test justification"
+        severity: warning
+        verification: |
+          Cada test tiene una justificación explícita documentada en
+          TRACEABILITY.md o como comentario en el test.
+        evidence_hint: >
+          Verificar que cada test referencia su AC y describe qué bug previene.
+
+      - id: PEFF-BUILD-005
+        pillar: PEFF
+        description: "Layer appropriateness"
+        severity: warning
+        verification: |
+          Ningún test verifica en una capa superior lo que podría verificarse
+          en una capa inferior. Tests de UI solo para happy paths críticos.
+          Tests de integration solo para puntos de integración reales.
+        evidence_hint: >
+          Para cada test de integration/ui, verificar que el comportamiento
+          NO puede ser cubierto por un unit test. Listar tests que podrían
+          bajar de capa.
+
+      - id: PEFF-BUILD-006
+        pillar: PEFF
+        description: "Speed tagging"
+        severity: warning
+        condition: testing.tagging.enabled == true
+        verification: |
+          Cada test tiene un tag de velocidad (@fast, @medium, @slow)
+          acorde a su capa y tiempo esperado de ejecución.
+        evidence_hint: >
+          Verificar presencia de @Tag annotation en cada test.
+          Listar tests sin tag.
 
   # ─────────────────────────────────────────────
   # P5 — Trazabilidad

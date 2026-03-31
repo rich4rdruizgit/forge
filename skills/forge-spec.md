@@ -171,7 +171,7 @@ Fill sections according to `profundidad`:
 | 11 | Arquitectura por Capa | — | — | ✅ |
 | 12 | Contrato de API | — | — | ✅ |
 | 13 | Flujo de Datos | — | — | ✅ |
-| 14 | Estrategia de Testing por Capa | — | — | ✅ |
+| 14 | **Estrategia de Testing — Budget & Pirámide** | ✅ | ✅ | ✅ |
 | 15 | Dependencias Externas | — | — | ✅ |
 
 For each applicable section, ask targeted questions. Build incrementally — NEVER generate the complete SPEC at once.
@@ -193,6 +193,7 @@ The agent asks challenge questions and WAITS. Never invents answers.
 - **Business challenge (P1)**: "Si el usuario hace [X] y luego [Y], ¿qué debería pasar? La HU no lo dice."
 - **Consistency challenge (P2)**: "En KNOWLEDGE.md el patrón es [X]. ¿Aplicamos lo mismo o hay razón para desviarnos?"
 - **Testing challenge (P3)**: "¿Cómo verificamos este AC sin depender de [implementación específica]?"
+- **Budget**: "¿Cuántos tests REALMENTE necesita este AC? ¿Un happy path basta o hay edge cases con riesgo real?"
 - **Integration challenge (P4)**: "El módulo [X] ya tiene [Y]. ¿Lo reutilizamos o hay razón para duplicar?"
 
 Each question must reference a specific pillar. Record answers in the relevant SPEC section.
@@ -253,9 +254,9 @@ Total: X/10. Minimum threshold: **7/10** (configurable via `spec_score_minimo` i
 
 | Score | Criterio |
 |-------|----------|
-| 2 | Todos los ACs describen comportamiento (no implementación) + input/output identificable sin mencionar mocks |
-| 1 | 1-2 ACs describen implementación |
-| 0 | Múltiples ACs describen implementación |
+| 2 | Todos los ACs describen comportamiento + input/output identificable + test budget definido respetando pirámide (70/20/10) |
+| 1 | 1-2 ACs describen implementación O budget no definido |
+| 0 | Múltiples ACs describen implementación O sin consideración de eficiencia |
 
 #### P4 — Integración (0-2)
 

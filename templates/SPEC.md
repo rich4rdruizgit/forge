@@ -47,7 +47,7 @@ PARA    {{beneficio o valor}}
 ---
 
 ## 4. Casos Borde
-<!-- SIEMPRE — Mínimo 2. Cada uno con AC correspondiente o justificación de por qué no tiene AC. [P1] -->
+<!-- SIEMPRE — Mínimo según profundidad (config.yaml → validacion.min_edge_cases). Cada uno con AC correspondiente o justificación de por qué no tiene AC. [P1] -->
 
 | ID | Caso | AC relacionado | Comportamiento esperado |
 |----|------|---------------|------------------------|
@@ -267,24 +267,44 @@ UI re-compone con nuevo estado
 
 ---
 
-## 14. Estrategia de Testing por Capa
-<!-- PROFUNDA — Qué se testea en cada capa, con qué herramientas. [P3] -->
-<!-- LIGERA y MEDIA: omitir o simplificar a tabla básica -->
+## 14. Estrategia de Testing — Budget & Pirámide
+<!-- SIEMPRE — Planificación de tests eficientes. Profundidad determina nivel de detalle. [P3] -->
 
-| Capa | Qué se testea | Herramientas | Criterio mínimo |
-|------|--------------|-------------|----------------|
-| Domain / UseCase | Lógica de negocio, invariantes, flujos de error | JUnit5 + MockK + Turbine | Todos los ACs cubiertos |
-| Repository | Coordinación caché/red, mapeo de errores | MockK + coroutines-test | Rutas feliz y error |
-| ViewModel | Estados emitidos por acción, side effects | Turbine + MockK | Estado por cada AC |
-| UI | Renderizado de estados, interacciones | Compose Testing | Estados loading/success/error/empty |
-| API / Data Source | Contrato HTTP, parsing de DTOs | MockWebServer | Request/response por endpoint |
+### Test Budget
+<!-- Cargado desde config.yaml → testing.presupuesto.{PROFUNDIDAD} -->
 
-### Casos críticos a testear
+| Capa | Budget | Justificación |
+|------|--------|---------------|
+| Unit (≥70%) | {{N}} tests | {{Qué comportamientos cubren}} |
+| Integration (≤20%) | {{N}} tests | {{Qué integraciones reales necesitan verificación}} |
+| UI (≤10%) | {{N}} tests | {{Solo happy paths críticos}} |
+| **Total** | **{{N}} tests** | Dentro del budget {{PROFUNDIDAD}} |
 
-| ID | Caso | Capa | AC vinculado |
-|----|------|------|-------------|
-| T-1 | {{descripción del caso}} | {{capa}} | AC-{{N}} |
-| T-2 | {{descripción del caso}} | {{capa}} | AC-{{N}} |
+### Regla de Justificación
+Cada test debe responder: **"¿Qué bug previene este test que ningún otro ya cubre?"**
+
+### Pirámide de Testing
+
+```
+        /  UI  \          ≤10%  Solo happy paths críticos
+       / Integr \         ≤20%  Integraciones reales
+      /   Unit   \        ≥70%  Lógica de negocio
+```
+
+### Tagging por Velocidad
+<!-- Si config.yaml → testing.tagging.enabled = true -->
+
+| Tag | Criterio | Cuándo corre en CI |
+|-----|----------|--------------------|
+| @fast | < {{fast_threshold_ms}}ms | Cada push |
+| @medium | < {{medium_threshold_ms}}ms | En PR |
+| @slow | > {{medium_threshold_ms}}ms | Nightly / release |
+
+### Casos Críticos a Testear
+
+| ID | Caso | Capa | AC | Tag | Justificación |
+|----|------|------|----|-----|---------------|
+| T-1 | {{descripción}} | {{unit/integration/ui}} | AC-{{N}} | {{@fast/@medium/@slow}} | {{qué bug previene}} |
 
 ---
 

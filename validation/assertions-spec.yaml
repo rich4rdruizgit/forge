@@ -61,20 +61,23 @@ pillars:
 
       - id: P1-SPEC-006
         pillar: P1
-        description: "Mínimo 2 casos borde documentados"
+        description: "Casos borde cumplen mínimo configurado por profundidad"
         severity: blocker
         verification: |
-          Sección 4 (Casos Borde) tiene >= 2 entradas concretas, no genéricas.
-          Cada caso borde es específico al problema de la HU.
-        evidence_hint: "Lista de casos borde"
+          Sección 4 (Casos Borde) tiene >= N entradas (N = config.yaml → validacion.min_edge_cases.{PROFUNDIDAD}).
+          Defaults: LIGERA ≥0, MEDIA ≥1, PROFUNDA ≥2.
+          Cada caso borde es específico al problema de la HU, no genérico.
+        evidence_hint: "Lista de casos borde, profundidad, y mínimo configurado"
 
       - id: P1-SPEC-007
         pillar: P1
-        description: "Al menos 3 ACs con IDs secuenciales"
+        description: "ACs cumplen mínimo configurado por profundidad"
         severity: blocker
         verification: |
-          Tabla de ACs con >= 3 filas con IDs AC-1, AC-2, ..., AC-N secuenciales.
-        evidence_hint: "Número de ACs y sus IDs"
+          Tabla de ACs con >= N filas (N = config.yaml → validacion.min_acs.{PROFUNDIDAD}).
+          Defaults: LIGERA ≥1, MEDIA ≥2, PROFUNDA ≥3.
+          IDs secuenciales AC-1, AC-2, ..., AC-N.
+        evidence_hint: "Número de ACs, profundidad, y mínimo configurado"
 
       - id: P1-SPEC-008
         pillar: P1

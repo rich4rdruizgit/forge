@@ -291,7 +291,7 @@ These are used ONLY when `.forge/validation/assertions-{phase}.yaml` does not ex
 | ID | Description | Verification |
 |----|-------------|-------------|
 | SPEC-01 | Problema del usuario definido | Artifact contains a non-empty "Problema" or "Problem" section with actual text (not just a header or placeholder) |
-| SPEC-02 | Al menos 3 ACs en formato AC-N | Count occurrences of `**AC-` in the artifact; MUST have >=3. Format: `**AC-1:`, `**AC-2:`, `**AC-3:` etc. |
+| SPEC-02 | ACs cumplen mínimo por profundidad | Count occurrences of `**AC-` in the artifact; MUST have >= config.yaml → validacion.min_acs.{PROFUNDIDAD} (defaults: LIGERA ≥1, MEDIA ≥2, PROFUNDA ≥3). |
 | SPEC-03 | Eventos de dominio definidos | At least 1 event name present in PascalCase ending in past-tense suffix (-ed, -ado, -ido, -Created, -Failed, etc.) in a "Domain Model" or "Eventos" section |
 | SPEC-04 | Arquitectura documentada | At least 1 architecture decision or component diagram documented (look for "Arquitectura", "Architecture", "Componentes", "Layers") |
 | SPEC-05 | Decisiones técnicas con justificación | At least 1 ADR-style decision with rationale (look for "Decisión", "Decision", "ADR", "Justificación", "Rationale") |
