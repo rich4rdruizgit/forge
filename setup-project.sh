@@ -343,7 +343,7 @@ cat <<'BANNER'
   ██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔══╝
   ██║     ╚██████╔╝██║  ██║╚██████╔╝███████╗
   ╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
-        AI-Assisted Development Pipeline v0.5
+        AI-Assisted Development Pipeline v0.6
       SPIKE → SPEC → BUILD → VERIFY → CLOSE
 
 BANNER
@@ -532,7 +532,7 @@ done
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔥 Forge v0.5 configurado en este proyecto."
+echo "🔥 Forge v0.6 configurado en este proyecto."
 echo ""
 
 # Check forge-memory MCP status (Claude Code only)

@@ -13,7 +13,7 @@ SPIKE (optional) → SPEC → BUILD (RED → auto-gate → GREEN) → VERIFY →
 
 Each phase produces an **approved artifact** that unlocks the next. No phase skipping. No implementation without approved specs. Philosophy: *think before you code*.
 
-- **Version:** v0.5 (implemented 2026-03-27)
+- **Version:** v0.6 (implemented 2026-03-30)
 - **Author:** doubler
 - **Primary Stack:** Android / KMP (Kotlin)
 - **Repository:** Clean — no uncommitted changes
@@ -207,6 +207,7 @@ All assertion YAML files now group checks under P1–P5 blocks:
 | SPEC unification | Single SPEC.md replaces PRD + EDD | Requirements and design evolve together; artificial separation caused sync issues |
 | Validation | Assertions + evidence | Evidence enables audit trail — no blind checkmarks |
 | INDEX.md | Markdown + Engram | File = versionable; Engram = semantic search. Forge works without Engram. |
+| Risk-based testing | Agent analyzes production risk per AC, justifies inclusions and exclusions | Formula-based generation (1 test per AC/state/gesture) produced ~60% boilerplate at scale; risk analysis lets the agent reason about value |
 
 ---
 
@@ -250,6 +251,7 @@ All assertion YAML files now group checks under P1–P5 blocks:
 | Phase 1.7 | ✅ Done | Pipeline simplification and SPEC unification (v0.3) |
 | Phase 1.9 | ✅ Done | Pillars, Adaptive Depth, Quality Score, auto-gate, KNOWLEDGE.md (v0.4) |
 | Phase 2 | ✅ Done | forge-memory MCP — semantic knowledge search, cross-session agent persistence (v0.5) |
+| Phase 2.1 | ✅ Done | Risk-based test generation — tests justified by production risk, not formulas (v0.6) |
 | Phase 3 | 🔜 Planned | CLI binary (`forge` as global command with linting) |
 | Phase 4 | 🔜 Planned | Ecosystem (more stacks, dashboard, Azure/Jira integration) |
 | Phase 4 | 🔜 Planned | Ecosystem (more stacks, dashboard, Azure/Jira integration) |
@@ -270,6 +272,35 @@ All assertion YAML files now group checks under P1–P5 blocks:
 | **Total** | **31** | |
 
 ---
+
+## v0.6 Changes Summary
+
+### Risk-Based Test Generation
+
+The test generation pipeline shifted from formula-based ("generate N tests per AC/state/gesture") to risk-based analysis ("what can fail in production and how do I prove it's handled").
+
+| Change | Before (v0.5) | After (v0.6) |
+|--------|--------------|--------------|
+| Test generation | "1 happy path per AC" + "1 test per UI state/gesture/route" | Agent analyzes production risk, writes test only if justified |
+| Budget | Min-max range per depth (target) | Max ceiling per depth (sanity check) |
+| Pyramid | Formula (70/20/10 distribution) | Economic constraint (justify expensive layers) |
+| Exclusions | Not tracked | Every excluded AC must be defended |
+| Auto-gate | Validates counts (≥1 test per AC) | Validates justifications (risk coverage + exclusion defense) |
+| PEFF assertions | 6 warnings (ignorable) | 3 blockers + 1 warning (enforceable) |
+| SPEC §14 | "Plan N tests by layer" | "Identify production risks that need evidence" |
+
+**Key principle**: The agent decides how many tests to write, but must defend every inclusion AND every exclusion. If 5 ACs produce 1 test, the agent explains why the other 4 don't need their own.
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| config.yaml | `estrategia: risk-based`, budget ranges → ceilings, added `justificacion_requerida` |
+| skills/forge-spec.md | Challenge question "Budget" → "Risk", P3 rubric references risk identification |
+| skills/forge-build.md | B3.5 → "Load Test Constraints", B4 → "Risk-Based Test Generation", B6 → cross-layer coverage |
+| skills/forge-verify.md | V5.5 → "Test Justification Audit" (inclusions + exclusions + economic audit) |
+| templates/SPEC.md | §14 → "Análisis de Riesgo" with risk table, inclusion/exclusion rules |
+| validation/assertions-build.yaml | PEFF 6 warnings → 3 blockers + 1 warning, auto-gate validates justifications |
 
 ## v0.5 Changes Summary
 

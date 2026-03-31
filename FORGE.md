@@ -20,7 +20,7 @@ tests_unit:       JUnit5 + MockK
 tests_ui:         Compose Testing / Espresso
 modelo_agente:    claude-sonnet-4-6
 modelo_arch:      claude-opus-4-6
-forge_version:    v0.5
+forge_version:    v0.6
 ```
 
 ---
@@ -134,7 +134,7 @@ skills/
 ├── forge-new.md                      ← carga HU, profundidad, consulta forge-memory (v0.5)
 ├── forge-spike.md
 ├── forge-spec.md                     ← protocolo 7 pasos, Quality Score, guarda a forge-memory (v0.5)
-├── forge-build.md                    ← RED → auto-gate → GREEN, guarda resultados a forge-memory (v0.5)
+├── forge-build.md                    ← RED → auto-gate → GREEN, risk-based test generation (v0.6)
 ├── forge-verify.md
 ├── forge-validate.md
 ├── forge-approve.md                  ← Quality Score check + condicionales
@@ -170,4 +170,4 @@ features/
 
 ---
 
-*Generado por Forge v0.5 — github.com/tu-usuario/forge*
+*Generado por Forge v0.6 — github.com/tu-usuario/forge*
