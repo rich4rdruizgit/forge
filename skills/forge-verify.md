@@ -124,31 +124,42 @@ For each navigation route from SPEC UI Contract:
 
 ---
 
-## Step V5.5 — Test Efficiency Analysis
+## Step V5.5 — Test Justification Audit
 
-Evaluate test efficiency against configured budget:
+Evaluate that every test inclusion and exclusion is justified:
 
-1. **Count tests by layer**: unit, integration, ui
-2. **Load budget**: `config.yaml → testing.presupuesto.{profundidad}`
-3. **Calculate pyramid**: actual % per layer vs configured limits
-4. **Detect duplicates**: tests that verify the same behavior across layers
-5. **Verify tagging**: each test has @fast/@medium/@slow tag (if enabled)
-6. **Estimate CI impact**: total estimated test time based on tags
+1. **Inclusion audit**: For each test in the suite:
+   - Does it have a named production failure it prevents?
+   - Is there another test that already covers this failure? (duplicate detection)
+   - If it's integration or UI: is the justification for the layer concrete?
 
-Generate efficiency report:
+2. **Exclusion audit**: For each AC without its own test:
+   - Is there documented justification?
+   - Is there a cross-reference to the test that covers it?
+   - Is the justification convincing? (not just "covered elsewhere" — must name the test)
+
+3. **Economic audit**: 
+   - Count tests by layer, verify pyramid constraint
+   - For each integration/UI test, verify it cannot be tested at a lower layer
+   - Estimate CI impact based on tags
+
+Generate justification report:
 ```
-📊 Test Efficiency:
-  Total tests: {N} (budget: {min}-{max})
-  Pyramid: unit {N} ({P}%) | integration {N} ({P}%) | ui {N} ({P}%)
-  Pyramid compliance: {✅|⚠️}
-  Duplicate coverage: {N} potential duplicates
-  Tagging: {N}/{total} tagged
+📊 Test Justification Audit:
+  Tests totales: {N} (techo: {max})
+  Inclusiones justificadas: {N}/{total} 
+  Exclusiones justificadas: {N}/{total ACs sin test}
+  Constraint económico: unit {N} | integration {N} (justificados: {N}/{N}) | ui {N} (justificados: {N}/{N})
+  
+  ⚠️ Justificaciones débiles:
+  - {test_name}: justificación genérica "{texto}"
+  - AC-{N}: exclusión sin cross-reference
+  
   Estimated CI time: @fast {T}s + @medium {T}s + @slow {T}s = {total}s
   PR pipeline (@fast + @medium): ~{T}s
 ```
 
-If duplicates found, list them with recommendation to remove.
-If pyramid violated, list tests that should move to a lower layer.
+If weak justifications found, list them with recommendation to strengthen or remove.
 
 ---
 
@@ -239,15 +250,15 @@ Los siguientes gaps fueron detectados:
 No se detectaron gaps. La implementación cubre completamente el SPEC.
 {{/if}}
 
-## Test Efficiency
-| Métrica | Configurado | Actual | Estado |
-|---------|-------------|--------|--------|
-| Total tests | {min}-{max} | {N} | {✅\|⚠️} |
-| Unit (≥{N}%) | ≥{config}% | {actual}% | {✅\|⚠️} |
-| Integration (≤{N}%) | ≤{config}% | {actual}% | {✅\|⚠️} |
-| UI (≤{N}%) | ≤{config}% | {actual}% | {✅\|⚠️} |
-| Tests con tag | 100% | {actual}% | {✅\|⚠️} |
-| Duplicados detectados | 0 | {N} | {✅\|⚠️} |
+## Test Justification Audit
+| Métrica | Estado |
+|---------|--------|
+| Tests totales | {N} (techo: {max}) {✅\|⚠️} |
+| Inclusiones justificadas | {N}/{total} {✅\|⚠️} |
+| Exclusiones justificadas | {N}/{total} {✅\|⚠️} |
+| Constraint económico | {N} non-unit tests justificados {✅\|⚠️} |
+| Tests con tag | {actual}% {✅\|⚠️} |
+| Justificaciones débiles | {N} {✅\|⚠️} |
 
 ### CI Impact Estimate
 | Tag | Tests | Tiempo estimado | Pipeline |
@@ -268,8 +279,8 @@ No se detectaron gaps. La implementación cubre completamente el SPEC.
 | Navigation | {N} | {N} | {%} |
 | Addenda | {N} | {N} | {%} |
 | **TOTAL** | **{N}** | **{N}** | **{%}** |
-| Test Efficiency | {budget status} | — | — |
-| Pyramid | {compliance} | — | — |
+| Test Justification | {N}/{total} justified | — | {✅\|⚠️} |
+| Economic Constraint | {N} non-unit justified | — | {✅\|⚠️} |
 | CI PR Time | ~{T}s | ≤{max_pr_test_time_s}s | {✅\|⚠️} |
 
 **Veredicto**: {✅ Verificado | ❌ Gaps encontrados}

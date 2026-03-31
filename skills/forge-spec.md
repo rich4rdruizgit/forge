@@ -171,7 +171,7 @@ Fill sections according to `profundidad`:
 | 11 | Arquitectura por Capa | — | — | ✅ |
 | 12 | Contrato de API | — | — | ✅ |
 | 13 | Flujo de Datos | — | — | ✅ |
-| 14 | **Estrategia de Testing — Budget & Pirámide** | ✅ | ✅ | ✅ |
+| 14 | **Estrategia de Testing — Análisis de Riesgo** | ✅ | ✅ | ✅ |
 | 15 | Dependencias Externas | — | — | ✅ |
 
 For each applicable section, ask targeted questions. Build incrementally — NEVER generate the complete SPEC at once.
@@ -193,7 +193,7 @@ The agent asks challenge questions and WAITS. Never invents answers.
 - **Business challenge (P1)**: "Si el usuario hace [X] y luego [Y], ¿qué debería pasar? La HU no lo dice."
 - **Consistency challenge (P2)**: "En KNOWLEDGE.md el patrón es [X]. ¿Aplicamos lo mismo o hay razón para desviarnos?"
 - **Testing challenge (P3)**: "¿Cómo verificamos este AC sin depender de [implementación específica]?"
-- **Budget**: "¿Cuántos tests REALMENTE necesita este AC? ¿Un happy path basta o hay edge cases con riesgo real?"
+- **Risk**: "¿Qué puede romper esto en producción? ¿Ese riesgo ya está cubierto por otro test o por el framework?"
 - **Integration challenge (P4)**: "El módulo [X] ya tiene [Y]. ¿Lo reutilizamos o hay razón para duplicar?"
 
 Each question must reference a specific pillar. Record answers in the relevant SPEC section.
@@ -254,9 +254,9 @@ Total: X/10. Minimum threshold: **7/10** (configurable via `spec_score_minimo` i
 
 | Score | Criterio |
 |-------|----------|
-| 2 | Todos los ACs describen comportamiento + input/output identificable + test budget definido respetando pirámide (70/20/10) |
-| 1 | 1-2 ACs describen implementación O budget no definido |
-| 0 | Múltiples ACs describen implementación O sin consideración de eficiencia |
+| 2 | Todos los ACs describen comportamiento + input/output identificable + riesgos de producción identificados con capa de testing justificada |
+| 1 | 1-2 ACs describen implementación O riesgos no identificados |
+| 0 | Múltiples ACs describen implementación O sin análisis de riesgo |
 
 #### P4 — Integración (0-2)
 

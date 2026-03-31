@@ -20,13 +20,13 @@ auto_gate:
   assertions:
     - id: P3-BUILD-AG-001
       pillar: P3
-      description: "Cada AC tiene al menos 1 test"
+      description: "Risk coverage — cada test tiene riesgo de producción nombrado"
       severity: blocker
       phase: auto-gate
       verification: |
-        Para cada AC-N de la SPEC: existe al menos un test que lo cubre.
-        El nombre del test o un comentario referencia el AC explícitamente.
-      evidence_hint: "ACs y sus tests correspondientes"
+        Cada test generado tiene documentado: (1) qué falla de producción previene,
+        (2) por qué esta capa y no una inferior, (3) qué cubre que ningún otro test cubre.
+      evidence_hint: "Justificación por test en output de RED phase"
 
     - id: P3-BUILD-AG-002
       pillar: P3
@@ -41,13 +41,15 @@ auto_gate:
 
     - id: P3-BUILD-AG-003
       pillar: P3
-      description: "Escenarios de error de la SPEC tienen tests"
+      description: "Escenarios de error evaluados"
       severity: blocker
       phase: auto-gate
       verification: |
         Cada caso borde y escenario de error documentado en la SPEC (sección 4
-        y condicionales) tiene al menos un test. No hay happy-path-only.
-      evidence_hint: "Casos borde con tests"
+        y condicionales) tiene test O justificación documentada de por qué
+        no requiere test propio (ej: cubierto por otro test, imposible en producción,
+        manejado por el framework).
+      evidence_hint: "Casos borde con tests o con justificación de exclusión"
 
     - id: P3-BUILD-AG-004
       pillar: P3
@@ -62,22 +64,34 @@ auto_gate:
 
     - id: P3-BUILD-AG-005
       pillar: P3
-      description: "Budget compliance"
-      severity: warning
+      description: "Ceiling compliance"
+      severity: blocker
       phase: auto-gate
       verification: |
-        Total de tests dentro del rango configurado para la profundidad actual.
-      evidence_hint: "Contar tests por capa, comparar con testing.presupuesto.{profundidad}."
+        Total de tests no excede el techo configurado para la profundidad actual.
+        El techo es un máximo, no un target.
+      evidence_hint: "Contar tests, comparar con testing.presupuesto.{profundidad} (máximos)."
 
     - id: P3-BUILD-AG-006
       pillar: P3
-      description: "Pyramid ratio"
-      severity: warning
+      description: "Economic constraint — pirámide justificada"
+      severity: blocker
       phase: auto-gate
       verification: |
-        Distribución respeta unit ≥70%, integration ≤20%, ui ≤10%
-        (o valores de config.yaml → testing.piramide).
-      evidence_hint: "Calcular porcentaje por capa del total de tests."
+        Si existen tests de integration o UI, cada uno tiene justificación de
+        por qué no se puede verificar en una capa inferior.
+      evidence_hint: "Justificación de capa por cada test de integration/UI."
+
+    - id: P3-BUILD-AG-007
+      pillar: P3
+      description: "Exclusion defense — ACs sin test tienen justificación"
+      severity: blocker
+      phase: auto-gate
+      verification: |
+        Cada AC que no tiene test propio tiene documentado: (1) por qué no necesita test,
+        (2) qué test existente cubre su comportamiento. Si hay 5+ ACs y solo 1 test,
+        cada exclusión debe ser explícita y convincente.
+      evidence_hint: "Sección 'Decisiones de exclusión' en output de RED phase"
 
 # ─────────────────────────────────────────────
 # P1 — Problema de Negocio
@@ -241,66 +255,42 @@ pillars:
     assertions:
       - id: PEFF-BUILD-001
         pillar: PEFF
-        description: "Budget compliance"
-        severity: warning
+        description: "Inclusiones justificadas"
+        severity: blocker
         verification: |
-          El número total de tests está dentro del rango definido en
-          config.yaml → testing.presupuesto.{profundidad}.
+          Cada test tiene una falla de producción concreta y específica que previene.
+          "Cubre el happy path" NO es justificación suficiente — debe nombrar qué
+          falla específica ocurriría sin este test.
         evidence_hint: >
-          Contar tests generados por capa (unit/integration/ui) y comparar
-          con el rango configurado. Listar tests por capa con conteo.
-        notes: >
-          Estar en el mínimo del rango es válido si la cobertura de ACs es completa.
-          Solo es blocker si se excede el máximo por más del 50%.
+          Revisar justificación de cada test. Rechazar justificaciones genéricas
+          como "verifica que funciona" o "cubre el caso normal".
 
       - id: PEFF-BUILD-002
         pillar: PEFF
-        description: "Pyramid distribution"
-        severity: warning
+        description: "Exclusiones justificadas"
+        severity: blocker
         verification: |
-          La distribución de tests respeta la pirámide:
-          unit ≥ testing.piramide.unit_min_pct%,
-          integration ≤ testing.piramide.integration_max_pct%,
-          ui ≤ testing.piramide.ui_max_pct%.
+          Cada AC o riesgo que NO tiene test propio tiene justificación documentada:
+          (a) cubierto por test existente (nombrar cuál), o
+          (b) imposible en producción (explicar por qué), o
+          (c) manejado por framework/infraestructura (nombrar qué lo maneja).
         evidence_hint: >
-          Calcular porcentaje por capa. Mostrar distribución actual vs configurada.
+          Revisar sección de exclusiones. Cada exclusión debe ser trazable.
 
       - id: PEFF-BUILD-003
         pillar: PEFF
-        description: "No duplicate coverage"
-        severity: warning
+        description: "Constraint económico respetado"
+        severity: blocker
         verification: |
-          No existen dos tests que verifiquen exactamente el mismo comportamiento
-          en la misma o diferente capa.
+          Cada test de integration o UI tiene justificación de por qué no se
+          puede verificar en una capa inferior (unit para integration,
+          integration para UI).
         evidence_hint: >
-          Para cada par de tests en el mismo AC, verificar que cubren
-          comportamientos distintos (happy path vs edge case, o diferentes edge cases).
-          Listar duplicados encontrados.
+          Para cada test no-unit, verificar que la justificación de capa
+          es concreta: "necesita DB real", "necesita HTTP real", "solo verificable
+          en render de UI".
 
       - id: PEFF-BUILD-004
-        pillar: PEFF
-        description: "Test justification"
-        severity: warning
-        verification: |
-          Cada test tiene una justificación explícita documentada en
-          TRACEABILITY.md o como comentario en el test.
-        evidence_hint: >
-          Verificar que cada test referencia su AC y describe qué bug previene.
-
-      - id: PEFF-BUILD-005
-        pillar: PEFF
-        description: "Layer appropriateness"
-        severity: warning
-        verification: |
-          Ningún test verifica en una capa superior lo que podría verificarse
-          en una capa inferior. Tests de UI solo para happy paths críticos.
-          Tests de integration solo para puntos de integración reales.
-        evidence_hint: >
-          Para cada test de integration/ui, verificar que el comportamiento
-          NO puede ser cubierto por un unit test. Listar tests que podrían
-          bajar de capa.
-
-      - id: PEFF-BUILD-006
         pillar: PEFF
         description: "Speed tagging"
         severity: warning
@@ -310,7 +300,6 @@ pillars:
           acorde a su capa y tiempo esperado de ejecución.
         evidence_hint: >
           Verificar presencia de @Tag annotation en cada test.
-          Listar tests sin tag.
 
   # ─────────────────────────────────────────────
   # P5 — Trazabilidad
@@ -349,13 +338,14 @@ conditionals:
     assertions:
       - id: P3-BUILD-UI-001
         pillar: P3
-        description: "Tests de UI cubren cada estado de pantalla"
+        description: "UI states con cobertura verificada en cualquier capa"
         severity: blocker
         verification: |
-          Para cada pantalla en Sección 8 de la SPEC: hay >= 1 test por estado
-          (loading, error, empty, success, etc.). Los tests usan TestTags definidos
-          en la SPEC para localizar elementos de UI.
-        evidence_hint: "Estados con UI tests"
+          Para cada estado de UI en Sección 8 de la SPEC: verificar cobertura en CUALQUIER capa:
+          a) Un UI test con TestTag para ese estado, O
+          b) Una referencia documentada a un test de ViewModel/Integration que cubre este estado.
+          No se requiere UI test si el estado está verificado en capa inferior.
+        evidence_hint: "Cobertura por estado: UI test o referencia cross-layer documentada."
 
       - id: P3-BUILD-UI-002
         pillar: P3

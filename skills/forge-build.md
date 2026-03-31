@@ -84,52 +84,70 @@ ACs completados: {M}/{total}
 
 ---
 
-## Step B3.5 — Load Test Budget
+## Step B3.5 — Load Test Constraints
 
-Load test budget from `config.yaml → testing`:
+Load test ceilings and pyramid constraints from `config.yaml → testing`:
 
-1. Read `testing.presupuesto.{profundidad}` for current feature depth (from FORGE.md)
-2. Read `testing.piramide` for pyramid constraints
+1. Read `testing.presupuesto.{profundidad}` for current feature depth (from FORGE.md) — these are CEILINGS (maximums), not targets
+2. Read `testing.piramide` for pyramid as economic constraint
 3. Read `testing.tagging` for speed tagging rules
 4. Read SPEC Section 14 (Test Budget & Pirámide) for planned test distribution
 
-Store budget limits:
+Load max ceilings and pyramid constraints:
 ```
-Budget {PROFUNDIDAD}:
-  unit: {min}-{max}
-  integration: {min}-{max}
-  ui: {min}-{max}
+Constraints {PROFUNDIDAD}:
+  unit: max {N}
+  integration: max {N}
+  ui: max {N}
   pyramid: unit ≥{N}% | integration ≤{N}% | ui ≤{N}%
   tagging: {enabled/disabled}
 ```
 
-If `testing` section missing in config.yaml → use defaults:
-- LIGERA: unit 3-8, integration 0-2, ui 0-1
-- MEDIA: unit 5-12, integration 1-3, ui 0-2
-- PROFUNDA: unit 10-20, integration 2-5, ui 1-3
+If `testing` section missing in config.yaml → use defaults (as ceilings):
+- LIGERA: unit max 8, integration max 2, ui max 1
+- MEDIA: unit max 12, integration max 3, ui max 2
+- PROFUNDA: unit max 20, integration max 5, ui max 3
 
-⚠️ If SPEC Section 14 budget exceeds config limits, WARN the dev before proceeding.
+⚠️ If SPEC Section 14 budget exceeds config ceilings, WARN the dev before proceeding.
 
 ---
 
-## Step B4 — Phase RED: Generate ALL Tests
+## Step B4 — Phase RED: Risk-Based Test Generation
 
-Generate ALL tests for ALL ACs before writing any implementation code. Zero implementation code in this phase.
+Generate tests based on production risk analysis. Zero implementation code in this phase.
 
-### Budget-Aware Test Generation
+### Test Generation Process
 
-Apply the **Minimal Viable Test** principle: each test must justify its existence.
+For each AC in order from Test Sequencing in SPEC, starting from the continuation point:
 
-**Per AC, generate:**
-1. **ONE happy path test** (mandatory) — verifies the Given/When/Then from SPEC
-2. **Edge case tests ONLY when risk is real** — null inputs, empty collections, concurrency, error states that could reach production
-3. **NO redundant tests** — if AC-2's happy path already exercises AC-1's domain logic, don't duplicate coverage
+1. Read AC-N from SPEC (Dado/Cuando/Entonces)
+2. Read corresponding event(s) from Domain Model
+3. Read contract(s) from Architecture
 
-**Pyramid enforcement:**
-- Start with unit tests (target ≥70% of total)
-- Add integration tests ONLY for real integration points (DB, API, cross-module)
-- Add UI tests ONLY for critical happy paths that MUST NOT break in production
-- If a behavior can be verified at the unit level, do NOT add an integration or UI test for it
+For each AC, analyze:
+1. **¿Qué puede fallar en producción con este AC?** — identify concrete failure scenarios
+2. **¿Este riesgo ya está cubierto por otro test en esta suite?** — if yes, skip and document why
+3. **¿En qué capa se puede verificar este riesgo al menor costo?** — unit > integration > UI (pyramid as economic constraint)
+4. **Escribir el test** — only if steps 1-3 justify it
+
+### Decisión de Inclusión
+Para cada test que escribas, documentar:
+- **Riesgo**: qué falla de producción previene
+- **Capa**: por qué esta capa y no una inferior
+- **Único**: qué cubre que ningún otro test ya cubre
+
+### Decisión de Exclusión
+Si un AC no genera test, documentar:
+- **AC-N**: por qué no necesita test propio
+- **Cobertura**: qué test existente ya cubre este comportamiento
+
+### NO redundant tests (PRIMARY RULE)
+If AC-2's risk is already covered by AC-1's test, do NOT duplicate coverage. Document the cross-reference instead.
+
+**Constraint económico (pirámide):**
+- Unit tests: costo base — preferir siempre
+- Integration tests: ~10x costo unit — solo para integraciones reales (DB, API, cross-module). Justificar: "¿por qué no unit?"
+- UI tests: ~50x costo unit — solo para comportamientos que SOLO se pueden verificar en UI. Justificar: "¿por qué no integration o unit?"
 
 **Tagging (if `testing.tagging.enabled`):**
 Each test gets a speed tag based on expected execution time:
@@ -137,45 +155,52 @@ Each test gets a speed tag based on expected execution time:
 - `@Tag("medium")` — mocked I/O or coroutine tests, < 2s
 - `@Tag("slow")` — real I/O, Compose UI tests, > 2s
 
-**Budget check:** After generating all tests, verify:
-- Total tests within budget range for current depth
-- Pyramid distribution within configured limits
-- If over budget → identify and remove lowest-value tests (those that duplicate coverage)
-- If under minimum → identify untested risk areas
+Write test(s) following stack skill conventions:
+- Test name MUST reference the AC (e.g., `// AC-N` comment or AC slug in name)
+- Test naming pattern: `should_{expected_result}_when_{condition}()`
+- Follow stack skill test framework, imports, and file location
+- The test MUST FAIL (red state) — there is no implementation yet
+- Update TRACEABILITY.md: AC-N status = 🔴 Red
 
-For each AC in order from Test Sequencing in SPEC, starting from the continuation point:
-
-1. Read AC-N from SPEC (Dado/Cuando/Entonces)
-2. Read corresponding event(s) from Domain Model
-3. Read contract(s) from Architecture
-4. Write test(s) following stack skill conventions:
-   - Test name MUST reference the AC (e.g., `// AC-N` comment or AC slug in name)
-   - Test naming pattern: `should_{expected_result}_when_{condition}()`
-   - Follow stack skill test framework, imports, and file location
-5. The test MUST FAIL (red state) — there is no implementation yet
-6. Update TRACEABILITY.md: AC-N status = 🔴 Red
-
-Output per AC:
+Output per AC (included):
 ```
 🔴 RED — AC-{N}: {AC title}
+Riesgo: {qué falla de producción previene}
 Test: {test file path}
 Test case(s): {test method names}
-Layer: {unit|integration|ui}
+Capa: {unit|integration|ui} — {justificación de capa}
 Tag: {@fast|@medium|@slow}
-Justificación: {qué bug previene este test}
 Estado: FAILING (no implementation yet)
 ```
 
-After ALL ACs have tests, output summary:
+Output per AC (excluded):
 ```
-🔴 Phase RED complete — {N} ACs, {M} tests generated
+⏭️ SKIP — AC-{N}: {AC title}
+Razón: {por qué no necesita test propio}
+Cubierto por: {test que ya cubre este comportamiento}
+```
 
-📊 Test Budget Report:
-  Budget ({PROFUNDIDAD}): unit {min}-{max}, integration {min}-{max}, ui {min}-{max}
-  Actual: unit {N} ({P}%), integration {N} ({P}%), ui {N} ({P}%)
-  Pyramid: {✅|⚠️} unit ≥70% | integration ≤20% | ui ≤10%
-  Budget: {✅ Within range|⚠️ Over by N|⚠️ Under minimum by N}
+**Sanity check:** After generating all tests, verify:
+- Total tests does not exceed ceiling for current depth (config.yaml → testing.presupuesto.{profundidad})
+- Pyramid distribution within configured limits
+- If over ceiling → the agent MUST remove tests, starting with those whose risk justification is weakest
+- If only 1 test for 5+ ACs → explain why each excluded AC doesn't need its own test
+
+After ALL ACs have been analyzed, output summary:
+```
+🔴 Phase RED complete — {N} ACs analyzed, {M} tests generated, {K} ACs covered by existing tests
+
+📊 Risk Analysis Report:
+  Tests generados: {M} (ceiling: {max})
+  ACs con test propio: {N}
+  ACs cubiertos por otros tests: {K} (con justificación)
+  Pirámide: unit {N} ({P}%) | integration {N} ({P}%) | ui {N} ({P}%)
+  Constraint económico: {✅|⚠️}
   Tags: @fast {N} | @medium {N} | @slow {N}
+
+Decisiones de exclusión:
+- AC-{N}: {razón}
+...
 
 Procediendo a auto-gate...
 ```
@@ -188,14 +213,13 @@ After generating ALL tests, the agent automatically validates:
 
 | Criterion | Check |
 |-----------|-------|
-| AC Coverage | Each AC has ≥ 1 test |
+| Risk Coverage | Each test has a named production failure it prevents |
+| Exclusion Defense | Each AC without a test has documented justification + cross-reference |
 | Behavior | Each test verifies behavior, not implementation |
-| Error Scenarios | Error cases from SPEC have tests |
+| Error Scenarios | Error cases from SPEC have tests OR documented justification for exclusion |
 | Mock Depth | 0 tests mock more than 2 layers |
-| Budget Compliance | Total tests within budget range for depth |
-| Pyramid Ratio | unit ≥70%, integration ≤20%, ui ≤10% |
-| No Duplicate Coverage | No two tests verify the exact same behavior |
-| Test Justification | Each test has explicit justification |
+| Ceiling Compliance | Total tests ≤ ceiling for depth |
+| Economic Constraint | If integration/UI tests exist, justification for why not unit |
 
 **Gate FAILS** → BLOCK. List what's missing. Do NOT proceed to GREEN.
 
@@ -204,13 +228,18 @@ After generating ALL tests, the agent automatically validates:
 ```
 🔒 Auto-gate RED → GREEN
 
-Tests generados: N
-Cobertura ACs: N/N
+Tests generados: {N} (ceiling: {max})
+Risk coverage: ✅ (cada test previene falla concreta)
+Exclusion defense: ✅ ({K} ACs sin test propio — justificados)
 Tests de comportamiento: ✅
-Escenarios de error: ✅
+Escenarios de error: ✅ (con tests o justificación de exclusión)
 Mock depth ≤ 2: ✅
-Budget compliance: ✅ ({N} tests, range {min}-{max})
-Pyramid ratio: ✅ (unit {P}% | integration {P}% | ui {P}%)
+Ceiling compliance: ✅ ({N} tests ≤ {max})
+Economic constraint: ✅ (integration/UI justificados)
+
+Decisiones de exclusión:
+- AC-{N}: {razón} → cubierto por {test}
+...
 
 Gate: PASSED → procediendo a GREEN
 ```
@@ -296,13 +325,18 @@ Proceed to the next AC in Test Sequencing order. If all ACs are complete, procee
 
 ---
 
-## Step B6 — UI Tests (if UI Contract exists in SPEC)
+## Step B6 — UI Tests (if UI Contract exists)
 
-If the SPEC contains a UI Contract section:
+Apply the same risk-based analysis from B4 to UI elements:
 
-1. **State coverage**: For each UI state (loading, success, error, empty), write a UI test with the appropriate TestTag verifying the state renders correctly
-2. **Interaction coverage**: For each gesture/interaction in the UI Contract, write a UI test verifying the behavior
-3. **Navigation coverage**: For each navigation route, write a test verifying the transition
+For each UI state/gesture/navigation in the UI Contract:
+1. **¿Este comportamiento ya está verificado en ViewModel o Integration?**
+   - Sí → documentar: "Estado {X} verificado por {test_name} a nivel {layer}". NO escribir UI test.
+   - No → ¿puede verificarse a nivel ViewModel/Integration?
+     - Sí → escribir test en esa capa, no en UI
+     - No → escribir UI test con justificación: "Solo verificable en UI porque {razón}"
+
+UI tests son los más caros (~50x unit). Cada UI test debe justificar por qué no se puede verificar más barato.
 
 Follow the same RED→GREEN→REFACTOR cycle for each UI test. Update TRACEABILITY.md accordingly.
 
@@ -499,16 +533,14 @@ Violación de esta regla = BUILD inválido. El AC debe rehacerse desde RED.
 - NUNCA modificar tests ya escritos en un ciclo anterior (a menos que un addendum lo requiera)
 - NUNCA declarar un AC como ✅ Refactored si los tests no pasan
 - Si el stack skill define convenciones que difieren de tus defaults → el stack skill gana
-- Los tests de UI deben cubrir todos los estados del UI Contract (loading, success, error, empty)
-- Los tests de interacción deben cubrir todos los gestures del UI Contract
+- Los tests de UI solo se escriben cuando el comportamiento NO se puede verificar en una capa inferior
+- Cada UI test debe justificar por qué no se puede verificar en ViewModel o Integration
 
 ### Test Efficiency
-- NUNCA generar tests que dupliquen cobertura de otro test
-- SIEMPRE justificar cada test: "¿Qué bug previene que ningún otro cubre?"
 - PREFERIR unit tests sobre integration tests, integration sobre UI
 - Si un comportamiento se puede verificar con un unit test, NO agregar integration o UI test para lo mismo
-- Budget es un RANGO, no un target — estar en el mínimo es perfectamente válido si la cobertura es completa
 - Tests de UI SOLO para happy paths críticos que no se pueden verificar en capas inferiores
+- Toda exclusión es tan importante como toda inclusión — ambas requieren justificación
 
 ### Error cases
 

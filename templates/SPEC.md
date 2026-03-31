@@ -267,29 +267,27 @@ UI re-compone con nuevo estado
 
 ---
 
-## 14. Estrategia de Testing — Budget & Pirámide
-<!-- SIEMPRE — Planificación de tests eficientes. Profundidad determina nivel de detalle. [P3] -->
+## 14. Estrategia de Testing — Análisis de Riesgo
+<!-- SIEMPRE — Identificar riesgos que necesitan evidencia de testing. [P3] -->
 
-### Test Budget
-<!-- Cargado desde config.yaml → testing.presupuesto.{PROFUNDIDAD} -->
+### Regla de Inclusión/Exclusión
+Cada test debe responder: **"¿Qué falla de producción específica previene este test que ningún otro test en esta suite ya previene?"**
+Cada riesgo descartado debe responder: **"¿Por qué este riesgo no necesita evidencia de testing?"**
 
-| Capa | Budget | Justificación |
-|------|--------|---------------|
-| Unit (≥70%) | {{N}} tests | {{Qué comportamientos cubren}} |
-| Integration (≤20%) | {{N}} tests | {{Qué integraciones reales necesitan verificación}} |
-| UI (≤10%) | {{N}} tests | {{Solo happy paths críticos}} |
-| **Total** | **{{N}} tests** | Dentro del budget {{PROFUNDIDAD}} |
+### Riesgos que requieren evidencia
 
-### Regla de Justificación
-Cada test debe responder: **"¿Qué bug previene este test que ningún otro ya cubre?"**
+| ID | Riesgo | Impacto si falla | Capa sugerida | AC relacionado |
+|----|--------|------------------|---------------|----------------|
+| R-1 | {{descripción del riesgo}} | {{qué pasa en producción}} | {{unit/integration/ui}} | AC-{{N}} |
 
-### Pirámide de Testing
+### Constraint Económico (Pirámide)
 
 ```
-        /  UI  \          ≤10%  Solo happy paths críticos
-       / Integr \         ≤20%  Integraciones reales
-      /   Unit   \        ≥70%  Lógica de negocio
+        /  UI  \          ≤10%  Costo ~50x unit — solo si no se puede verificar más barato
+       / Integr \         ≤20%  Costo ~10x unit — solo integraciones reales
+      /   Unit   \        ≥70%  Costo base — preferir siempre
 ```
+Si elegís una capa superior, justificá por qué no se puede verificar en una inferior.
 
 ### Tagging por Velocidad
 <!-- Si config.yaml → testing.tagging.enabled = true -->
@@ -304,7 +302,7 @@ Cada test debe responder: **"¿Qué bug previene este test que ningún otro ya c
 
 | ID | Caso | Capa | AC | Tag | Justificación |
 |----|------|------|----|-----|---------------|
-| T-1 | {{descripción}} | {{unit/integration/ui}} | AC-{{N}} | {{@fast/@medium/@slow}} | {{qué bug previene}} |
+| T-1 | {{descripción}} | {{unit/integration/ui}} | AC-{{N}} | {{@fast/@medium/@slow}} | {{¿Por qué este test y no otro?}} |
 
 ---
 
