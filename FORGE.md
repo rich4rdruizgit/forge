@@ -61,6 +61,7 @@ Antes de cualquier acción, leer:
 
 | El dev dice | Tú haces |
 |-------------|----------|
+| `forge scan [modulos...] [--interactive\|--project-only]` | Analiza un proyecto legacy sin compilar. Genera `.forge/project-dna.yaml` con la "ficha técnica" del proyecto |
 | `forge new "nombre feature"` | Skill: forge-new.md — Carga HU, evalúa profundidad, consulta forge-memory (fallback: KNOWLEDGE.md), crea ciclo |
 | `forge spike` o "trabajemos el spike" | Skill: forge-spike.md — Guía investigación técnica estructurada |
 | `forge spec` o "trabajemos la spec" | Skill: forge-spec.md — Protocolo de 7 pasos, conversación guiada, Quality Score por pilares |
@@ -72,6 +73,23 @@ Antes de cualquier acción, leer:
 | `forge ref <query>` | Skill: forge-ref.md — Consulta forge-memory + INDEX.md de features cerradas |
 | `forge status` | Skill: forge-status.md — Estado actual del ciclo con validation scores |
 | `forge close` | Skill: forge-close.md — Archiva feature + extrae conocimiento a KNOWLEDGE.md + indexa en forge-memory |
+
+### forge scan — El Arqueólogo
+
+Analiza un proyecto Android legacy usando `fd` + `rg` (sin compilar, sin Gradle sync).
+
+**Modos:**
+- `forge scan` — Scan completo (todos los módulos)
+- `forge scan app feature-login` — Solo esos módulos
+- `forge scan --interactive` — Selector interactivo de módulos
+- `forge scan --project-only` — Solo ficha técnica (Nivel 1)
+
+**Output:** `.forge/project-dna.yaml` — mapa genético del proyecto que alimenta SPEC, BUILD y assertions.
+
+**Nivel 1 (project-wide, siempre):** Versions catalog, DI framework, SDK versions, Gradle, KSP/KAPT.
+**Nivel 2 (per-module, selectivo):** LOC, XML/Compose ratio, arquitectura (MVP/MVVM/MVI), async patterns, test frameworks, patrones legacy.
+
+Re-ejecutar `forge scan <modulo>` agrega módulos al DNA existente sin perder datos previos.
 
 ### 3. Reglas que nunca rompes
 - ❌ No generas código de implementación si la SPEC no está aprobada
