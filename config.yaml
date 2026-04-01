@@ -1,7 +1,7 @@
 # Forge Configuration
 # Editar según el proyecto y el equipo
 
-forge_version: v0.6
+forge_version: v0.7
 
 proyecto:
   nombre: "Mi Proyecto"

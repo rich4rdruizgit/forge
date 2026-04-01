@@ -225,6 +225,7 @@ FORGE/
 | v0.4 | ✅ Done | 5 Pillars, Quality Score, adaptive depth, project memory (KNOWLEDGE.md), auto-gate in BUILD |
 | v0.5 | ✅ Done | forge-memory MCP — semantic knowledge search, cross-session agent persistence, context-safe retrieval |
 | v0.6 | ✅ Done | Risk-based test generation — agent justifies every test inclusion and exclusion by production risk |
+| v0.7 | ✅ Done | Orchestrator architecture — sub-agent delegation for BUILD, VERIFY, APPROVE to reduce context consumption ~75% |
 | v1.0 | 🔜 | Ecosystem — more stacks, web dashboard, Azure DevOps / Jira integration |
 
 ---
@@ -235,4 +236,4 @@ FORGE/
 
 ---
 
-*FORGE v0.6 — March 2026*
+*FORGE v0.7 — March 2026*

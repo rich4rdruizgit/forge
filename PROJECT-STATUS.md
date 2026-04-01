@@ -13,7 +13,7 @@ SPIKE (optional) → SPEC → BUILD (RED → auto-gate → GREEN) → VERIFY →
 
 Each phase produces an **approved artifact** that unlocks the next. No phase skipping. No implementation without approved specs. Philosophy: *think before you code*.
 
-- **Version:** v0.6 (implemented 2026-03-30)
+- **Version:** v0.7 (implemented 2026-03-31)
 - **Author:** doubler
 - **Primary Stack:** Android / KMP (Kotlin)
 - **Repository:** Clean — no uncommitted changes
@@ -252,24 +252,25 @@ All assertion YAML files now group checks under P1–P5 blocks:
 | Phase 1.9 | ✅ Done | Pillars, Adaptive Depth, Quality Score, auto-gate, KNOWLEDGE.md (v0.4) |
 | Phase 2 | ✅ Done | forge-memory MCP — semantic knowledge search, cross-session agent persistence (v0.5) |
 | Phase 2.1 | ✅ Done | Risk-based test generation — tests justified by production risk, not formulas (v0.6) |
+| Phase 2.2 | ✅ Done | Orchestrator architecture — sub-agent delegation for BUILD, VERIFY, APPROVE phases (v0.7) |
 | Phase 3 | 🔜 Planned | CLI binary (`forge` as global command with linting) |
 | Phase 4 | 🔜 Planned | Ecosystem (more stacks, dashboard, Azure/Jira integration) |
 | Phase 4 | 🔜 Planned | Ecosystem (more stacks, dashboard, Azure/Jira integration) |
 
 ---
 
-## File Count (v0.5)
+## File Count (v0.7)
 
 | Category | Files | Notes |
 |----------|-------|-------|
-| Skills | 11 | forge-new, forge-spike, forge-spec, forge-build, forge-verify, forge-approve, forge-validate, forge-trace, forge-ref, forge-status, forge-close |
-| Shared skills | 1 | `_shared/forge-runtime.md` — NEW v0.4 |
+| Skills | 14 | forge-new, forge-spike, forge-spec, forge-build, forge-build-red, forge-build-green, forge-orchestrator, forge-verify, forge-approve, forge-validate, forge-trace, forge-ref, forge-status, forge-close |
+| Shared skills | 1 | `_shared/forge-runtime.md` — updated v0.7 (sub-agent mode) |
 | Templates | 7 | SPIKE, SPEC, VERIFY, TRACEABILITY, VALIDATION, INDEX, KNOWLEDGE (NEW v0.4) |
 | Validation | 5 | assertions-spike, spec, build, verify, cross (all reorganized by pillars) |
 | Core Docs | 2 | FORGE.md, KNOWLEDGE.md |
 | Config/Scripts | 2 | config.yaml, setup-project.sh |
 | Stack Guides | 3 | android.md, kmp.md, TEMPLATE.md |
-| **Total** | **31** | |
+| **Total** | **34** | |
 
 ---
 
