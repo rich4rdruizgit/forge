@@ -9,6 +9,8 @@
 
 > **Think before you code.** An AI-assisted development methodology that enforces a gated pipeline from idea to verified implementation.
 
+[Documentation & Demo](https://rich4rdruizgit.github.io/forge/)
+
 ---
 
 ## What is Forge?
@@ -44,6 +46,7 @@ Each phase is **immutable once approved** — no silent rewrites, no going back.
 | Command | What it does |
 |---------|-------------|
 | `forge new "feature name"` | Load HU, evaluate depth, consult knowledge base, bootstrap cycle |
+| `forge scan` | Analyze legacy project without compiling — detect stack, patterns, modules |
 | `forge spike` | Start optional exploration phase |
 | `forge spec` | 7-step conversation protocol — AI asks, never invents |
 | `forge build` | RED → auto-gate → GREEN — tests first, implementation after, tests immutable |
@@ -177,11 +180,14 @@ FORGE/
 ├── config.yaml                 ← team configuration template
 ├── setup-project.sh            ← bootstrap script
 │
-├── skills/                     ← 11 agent skills (one per forge command)
+├── skills/                     ← 14 agent skills + orchestrator
+│   ├── forge-orchestrator.md   ← coordinates inline vs sub-agent phases (v0.7)
 │   ├── forge-new.md
 │   ├── forge-spike.md
 │   ├── forge-spec.md
-│   ├── forge-build.md
+│   ├── forge-build.md          ← full protocol reference
+│   ├── forge-build-red.md      ← sub-agent: test generation + auto-gate (v0.7)
+│   ├── forge-build-green.md    ← sub-agent: implementation per AC batch (v0.7)
 │   ├── forge-verify.md
 │   ├── forge-approve.md
 │   ├── forge-validate.md
@@ -233,6 +239,8 @@ FORGE/
 ## Author
 
 **doubler** — [github.com/doubler](https://github.com/doubler)
+
+[Documentation](https://rich4rdruizgit.github.io/forge/) | [GitHub](https://github.com/rich4rdruizgit/forge)
 
 ---
 

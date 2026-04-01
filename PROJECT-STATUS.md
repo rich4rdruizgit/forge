@@ -40,20 +40,23 @@ FORGE/
 ├── config.yaml                 ← Team configuration template
 ├── setup-project.sh            ← Bootstrap script
 │
-├── skills/                     ← 11 agent skills (Forge commands) + 1 shared runtime
+├── skills/                     ← 14 agent skills + 1 shared runtime
+│   ├── forge-orchestrator.md   ← NEW v0.7 (orchestrator coordination)
 │   ├── forge-new.md            ← MODIFIED v0.4
 │   ├── forge-spike.md
 │   ├── forge-spec.md           ← MODIFIED v0.4
-│   ├── forge-build.md          ← MODIFIED v0.4
-│   ├── forge-verify.md         ← MODIFIED v0.4
-│   ├── forge-approve.md
+│   ├── forge-build.md          ← MODIFIED v0.4 (full protocol reference)
+│   ├── forge-build-red.md      ← NEW v0.7 (RED sub-agent)
+│   ├── forge-build-green.md    ← NEW v0.7 (GREEN sub-agent)
+│   ├── forge-verify.md         ← MODIFIED v0.7 (return contract)
+│   ├── forge-approve.md        ← MODIFIED v0.7 (return contract)
 │   ├── forge-validate.md
-│   ├── forge-trace.md
+│   ├── forge-trace.md          ← MODIFIED v0.7 (return contract)
 │   ├── forge-ref.md
 │   ├── forge-status.md         ← MODIFIED v0.4
 │   ├── forge-close.md          ← MODIFIED v0.4
 │   └── _shared/
-│       └── forge-runtime.md    ← NEW v0.4 (shared runtime protocol)
+│       └── forge-runtime.md    ← MODIFIED v0.7 (sub-agent mode)
 │
 ├── templates/                  ← 7 artifact templates
 │   ├── SPIKE.md
@@ -86,7 +89,8 @@ FORGE/
 | `forge new "name"` | forge-new | Bootstrap feature cycle | Loads HU, evaluates adaptive depth, consults KNOWLEDGE.md |
 | `forge spike` | forge-spike | Optional exploration/research phase | — |
 | `forge spec` | forge-spec | Generate unified SPEC document | 7-step conversation protocol |
-| `forge build` | forge-build | RED → auto-gate → GREEN implementation | Auto-gate replaces manual TDD/SDD commands |
+| `forge scan` | forge-scan.sh | Analyze legacy project | NEW v0.6 — static analysis without compiling |
+| `forge build` | forge-orchestrator → forge-build-red/green | RED → auto-gate → GREEN implementation | v0.7: orchestrator delegates to sub-agents |
 | `forge verify` | forge-verify | Explicit verification phase | Quality Score (0-10) with 5-pillar rubric |
 | `forge approve` | forge-approve | Validate & approve phase | Assertions organized by pillars |
 | `forge validate` | forge-validate | Dry-run validation (no approval) | — |
@@ -255,7 +259,6 @@ All assertion YAML files now group checks under P1–P5 blocks:
 | Phase 2.2 | ✅ Done | Orchestrator architecture — sub-agent delegation for BUILD, VERIFY, APPROVE phases (v0.7) |
 | Phase 3 | 🔜 Planned | CLI binary (`forge` as global command with linting) |
 | Phase 4 | 🔜 Planned | Ecosystem (more stacks, dashboard, Azure/Jira integration) |
-| Phase 4 | 🔜 Planned | Ecosystem (more stacks, dashboard, Azure/Jira integration) |
 
 ---
 
@@ -292,7 +295,7 @@ The test generation pipeline shifted from formula-based ("generate N tests per A
 
 **Key principle**: The agent decides how many tests to write, but must defend every inclusion AND every exclusion. If 5 ACs produce 1 test, the agent explains why the other 4 don't need their own.
 
-### Files Modified
+### Files Modified (v0.6)
 
 | File | Change |
 |------|--------|
@@ -302,6 +305,41 @@ The test generation pipeline shifted from formula-based ("generate N tests per A
 | skills/forge-verify.md | V5.5 → "Test Justification Audit" (inclusions + exclusions + economic audit) |
 | templates/SPEC.md | §14 → "Análisis de Riesgo" with risk table, inclusion/exclusion rules |
 | validation/assertions-build.yaml | PEFF 6 warnings → 3 blockers + 1 warning, auto-gate validates justifications |
+
+---
+
+## v0.7 Changes Summary
+
+### Orchestrator Architecture
+
+The pipeline shifted from all-inline execution to an orchestrator/sub-agent model. Heavy, autonomous phases run as isolated sub-agents with fresh context, reducing main conversation token consumption by ~75%.
+
+| Change | Before (v0.6) | After (v0.7) |
+|--------|--------------|--------------|
+| BUILD execution | All inline (~50-100k tokens) | RED + GREEN as separate sub-agents (~25k each, fresh) |
+| VERIFY execution | Inline (reads all code in main context) | Sub-agent with fresh context |
+| APPROVE execution | Inline | Sub-agent |
+| Orchestrator state | Full conversation history | ~200 tokens minimal state |
+| Context after compaction | State lost, partial recovery | Resilient — TRACEABILITY.md + forge-memory checkpoint |
+| Skill files | 1 forge-build.md (584 lines) | forge-build-red.md + forge-build-green.md (~200 lines each) |
+
+### Files Added
+
+| File | Purpose |
+|------|---------|
+| skills/forge-orchestrator.md | Coordinates inline vs sub-agent phases |
+| skills/forge-build-red.md | RED sub-agent: test generation + auto-gate |
+| skills/forge-build-green.md | GREEN sub-agent: implementation per AC batch |
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| skills/_shared/forge-runtime.md | Added Sub-Agent Mode section (R4 override, return contract protocol) |
+| skills/forge-verify.md | Added Return Contract section |
+| skills/forge-approve.md | Added Return Contract section |
+| skills/forge-trace.md | Added Return Contract section |
+| FORGE.md | Updated to v0.7, new skills in structure |
 
 ## v0.5 Changes Summary
 
