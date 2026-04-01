@@ -578,7 +578,6 @@ if [[ " ${DETECTED[*]} " == *" claude "* ]]; then
 fi
 
 echo "Próximos pasos:"
-echo "  1. Editá .forge/config.yaml con tu stack"
-echo "  2. Abrí tu herramienta de IA en este proyecto"
-echo "  3. Ejecutá: forge new \"nombre de tu primera feature\""
+echo "  1. Abrí tu herramienta de IA en este proyecto"
+echo "  2. Ejecutá: forge new \"nombre de tu primera feature\""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
