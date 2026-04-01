@@ -530,6 +530,26 @@ for tool in "${DETECTED[@]}"; do
   esac
 done
 
+# --- Scan legacy project for DNA ---
+CYAN='\033[0;36m'
+NC='\033[0m'
+printf "\n${CYAN}━━━ Escaneo de proyecto ━━━${NC}\n"
+echo "¿Querés escanear el proyecto para detectar patrones? (recomendado para proyectos existentes)"
+read -r -p "[S/n]: " scan_confirm
+if [[ ! "$scan_confirm" =~ ^[Nn]$ ]]; then
+  echo ""
+  echo "Modo de escaneo:"
+  echo "  1. Completo (todos los módulos)"
+  echo "  2. Interactivo (elegir módulos)"
+  echo "  3. Solo ficha técnica (Nivel 1, sin módulos)"
+  read -r -p "[1/2/3]: " scan_mode
+  case "$scan_mode" in
+    2) bash "$FORGE_REPO/forge-scan.sh" --interactive ;;
+    3) bash "$FORGE_REPO/forge-scan.sh" --project-only ;;
+    *) bash "$FORGE_REPO/forge-scan.sh" ;;
+  esac
+fi
+
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔥 Forge v0.6 configurado en este proyecto."
@@ -537,7 +557,7 @@ echo ""
 
 # Check forge-memory MCP status (Claude Code only)
 if [[ " ${DETECTED[*]} " == *" claude "* ]]; then
-  local mcp_file="$HOME/.claude/mcp/forge-memory.json"
+  mcp_file="$HOME/.claude/mcp/forge-memory.json"
   if [ -f "$mcp_file" ]; then
     echo "✅ forge-memory: configurado"
   else
@@ -558,7 +578,6 @@ if [[ " ${DETECTED[*]} " == *" claude "* ]]; then
 fi
 
 echo "Próximos pasos:"
-echo "  1. Editá .forge/config.yaml con tu stack"
-echo "  2. Abrí tu herramienta de IA en este proyecto"
-echo "  3. Ejecutá: forge new \"nombre de tu primera feature\""
+echo "  1. Abrí tu herramienta de IA en este proyecto"
+echo "  2. Ejecutá: forge new \"nombre de tu primera feature\""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

@@ -73,9 +73,9 @@ Ask the developer:
 
 Wait for response. Write the value in the SPIKE.md header `Time-box` field.
 
-## Engram Domain Context
+## forge-memory Domain Context
 
-**If Engram tools are available** (`mem_search`), before exploring options:
+**If forge-memory tools are available** (`mem_search`), before exploring options:
 
 1. Extract 2-3 keywords from the technical question and context
 2. Call `mem_search` with those keywords
@@ -84,7 +84,7 @@ Wait for response. Write the value in the SPIKE.md header `Time-box` field.
      "En una investigación previa encontré esto: [{relevant finding or decision}].
       ¿Esto afecta las opciones que vamos a evaluar?"
    - This is context, not a constraint. The developer decides how to use it.
-4. If nothing relevant found or Engram unavailable → continue normally, no mention of it.
+4. If nothing relevant found or forge-memory unavailable → continue normally, no mention of it.
 
 This step runs only ONCE per SPIKE session.
 
