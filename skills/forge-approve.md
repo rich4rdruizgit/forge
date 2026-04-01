@@ -365,3 +365,27 @@ These are used ONLY when `.forge/validation/assertions-{phase}.yaml` does not ex
 **Artefacto**: .forge/features/activo/{slug}/VALIDATION-{PHASE}.md
 **Acción requerida**: Corregí los blockers y ejecutá `forge approve` nuevamente.
 ```
+
+---
+
+## Return Contract (Sub-Agent Mode)
+
+When running as a sub-agent, output this structured result at the end:
+
+```yaml
+status: complete | blocked
+summary: "Fase {phase}: {approved|blocked}. Blockers: {passed}/{total}. Warnings: {passed}/{total}."
+artifacts_written:
+  - path: .forge/features/activo/{slug}/VALIDATION-{PHASE}.md
+    action: created
+  - path: .forge/FORGE.md
+    action: updated  # only if approved
+metrics:
+  blockers_passed: {N}/{total}
+  warnings_passed: {N}/{total}
+  validation_score: {score}
+  phase_approved: true | false
+next_recommended: "forge {next_phase}" | "fix blockers and retry"
+risks:
+  - "{blocker failure description}" # one per failed blocker
+```

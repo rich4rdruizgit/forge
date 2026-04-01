@@ -196,3 +196,24 @@ Output a concise summary:
 - Si no hay gaps ni huérfanos, las secciones de gaps se renderizan con tablas vacías (solo headers)
 - Cada ejecución de `forge trace` SOBREESCRIBE el TRACEABILITY.md anterior (es un reporte regenerable)
 - SIEMPRE incluir TODOS los ACs del SPEC — nunca omitir filas
+
+---
+
+## Return Contract (Sub-Agent Mode)
+
+When running as a sub-agent, output this structured result at the end:
+
+```yaml
+status: complete
+summary: "Traceability matrix generada. {N} ACs trazados. Gaps: {G}. Orphans: {O}."
+artifacts_written:
+  - path: .forge/features/activo/{slug}/TRACEABILITY.md
+    action: created | updated
+metrics:
+  acs_traced: {N}/{total}
+  gaps: {N}
+  orphans: {N}
+  completeness: "{pct}%"
+next_recommended: "forge build" | "forge verify"
+risks: []
+```
