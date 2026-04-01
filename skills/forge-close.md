@@ -187,11 +187,11 @@ Para comenzar una nueva feature: `forge new "nombre de la nueva feature"`
 
 ---
 
-## Engram Memory
+## forge-memory Memory
 
-After archiving, save the completed feature to Engram so future features can learn from it.
+After archiving, save the completed feature to forge-memory so future features can learn from it.
 
-**If Engram tools are available** (`mem_save`), execute:
+**If forge-memory tools are available** (`mem_save`), execute:
 
 Call `mem_save` with:
 - **title**: `Feature cerrada: {feature-name}`
@@ -226,7 +226,7 @@ Call `mem_save` with:
   **Tags**: {comma-separated tags from INDEX.md}
   ```
 
-If Engram is not available, skip silently — do NOT block or warn. Forge works without Engram.
+If forge-memory is not available, skip silently — do NOT block or warn. Forge works without forge-memory.
 
 ---
 

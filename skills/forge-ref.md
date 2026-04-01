@@ -2,7 +2,7 @@
 name: forge-ref
 description: >
   Query as-built references from closed features. Searches INDEX.md files
-  and Engram for past implementations matching a query.
+  and forge-memory for past implementations matching a query.
 trigger: "`forge ref <query>` command with FORGE.md present in project"
 license: Apache-2.0
 metadata:
@@ -74,13 +74,13 @@ If `.forge/KNOWLEDGE.md` exists and is non-empty:
 
 If `.forge/KNOWLEDGE.md` does not exist or is empty, skip silently.
 
-### Step REF3 — Engram search (if available)
+### Step REF3 — forge-memory search (if available)
 
 a. Call `mem_search` with the query and project name
 b. Filter results matching topic_key patterns: `.forge/features/*`, `forge-close/*`
 c. For relevant matches, call `mem_get_observation` to get full content
 
-If Engram is not available → skip this step silently and rely on file search only.
+If forge-memory is not available → skip this step silently and rely on file search only.
 
 ### Step REF4 — Rank results
 
@@ -171,7 +171,7 @@ Summary table of matching features (Step REF5), then detail on request (Step REF
 
 - **NUNCA modificar archivos de features cerradas — esta skill es de solo lectura, sin excepciones**
 - Si no hay features cerradas → informar amablemente y sugerir que se completará con el uso de `forge close`
-- Si Engram no está disponible → buscar solo en archivos, sin error
+- Si forge-memory no está disponible → buscar solo en archivos, sin error
 - Mostrar resultados rankeados por relevancia — los más relevantes primero
 - SIEMPRE mostrar el resumen ejecutivo de cada resultado — es el contexto mínimo necesario
 - Para búsquedas amplias, limitar a los 5 resultados más relevantes y ofrecer paginación
