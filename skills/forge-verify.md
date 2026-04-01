@@ -381,3 +381,26 @@ Status in VERIFY.md: `✅ Verificado`
 **Error**: {EXXX — message}
 **Acción requerida**: {what to do}
 ```
+
+---
+
+## Return Contract (Sub-Agent Mode)
+
+When running as a sub-agent, output this structured result at the end:
+
+```yaml
+status: complete | blocked
+summary: "Verificación completada. Cobertura: {coverage_pct}%. Gaps detectados: {N}."
+artifacts_written:
+  - path: .forge/features/activo/{slug}/VERIFY.md
+    action: created
+metrics:
+  ac_coverage: {N}/{total}
+  event_coverage: {N}/{total}
+  ui_state_coverage: {N}/{total}
+  gaps_detected: {N}
+  orphans_detected: {N}
+next_recommended: "forge approve"
+risks:
+  - "{gap description}" # one per gap found
+```

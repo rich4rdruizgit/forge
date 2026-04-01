@@ -20,7 +20,7 @@ tests_unit:       JUnit5 + MockK
 tests_ui:         Compose Testing / Espresso
 modelo_agente:    claude-sonnet-4-6
 modelo_arch:      claude-opus-4-6
-forge_version:    v0.6
+forge_version:    v0.7
 ```
 
 ---
@@ -65,7 +65,7 @@ Antes de cualquier acción, leer:
 | `forge new "nombre feature"` | Skill: forge-new.md — Carga HU, evalúa profundidad, consulta forge-memory (fallback: KNOWLEDGE.md), crea ciclo |
 | `forge spike` o "trabajemos el spike" | Skill: forge-spike.md — Guía investigación técnica estructurada |
 | `forge spec` o "trabajemos la spec" | Skill: forge-spec.md — Protocolo de 7 pasos, conversación guiada, Quality Score por pilares |
-| `forge build` o "trabajemos el build" | Skill: forge-build.md — RED → auto-gate → GREEN. Tests primero, implementación después. Tests inmutables |
+| `forge build` o "trabajemos el build" | Orchestrator: forge-orchestrator.md → delega a forge-build-red.md (tests) y forge-build-green.md (implementación) como sub-agentes |
 | `forge validate` | Skill: forge-validate.md — Dry-run de validación con assertions |
 | `forge approve` | Skill: forge-approve.md — Validación con assertions + aprobación si pasan blockers |
 | `forge verify` o "verificá la feature" | Skill: forge-verify.md — Validación post-implementación SPEC vs código |
@@ -148,15 +148,18 @@ stacks/
 
 skills/
 ├── _shared/
-│   └── forge-runtime.md              ← runtime compartido R0-R4 (v0.5) — R0: forge-memory session init
+│   └── forge-runtime.md              ← runtime compartido R0-R4 + sub-agent mode (v0.7)
+├── forge-orchestrator.md             ← coordina fases inline vs sub-agentes (v0.7)
 ├── forge-new.md                      ← carga HU, profundidad, consulta forge-memory (v0.5)
 ├── forge-spike.md
 ├── forge-spec.md                     ← protocolo 7 pasos, Quality Score, guarda a forge-memory (v0.5)
-├── forge-build.md                    ← RED → auto-gate → GREEN, risk-based test generation (v0.6)
-├── forge-verify.md
+├── forge-build.md                    ← referencia completa del protocolo BUILD (v0.6)
+├── forge-build-red.md                ← sub-skill: test generation + auto-gate (v0.7)
+├── forge-build-green.md              ← sub-skill: implementación por batch de ACs (v0.7)
+├── forge-verify.md                   ← + return contract para sub-agent mode (v0.7)
 ├── forge-validate.md
-├── forge-approve.md                  ← Quality Score check + condicionales
-├── forge-trace.md
+├── forge-approve.md                  ← + return contract para sub-agent mode (v0.7)
+├── forge-trace.md                    ← + return contract para sub-agent mode (v0.7)
 ├── forge-ref.md                      ← busca en forge-memory (v0.5), fallback KNOWLEDGE.md
 ├── forge-status.md
 └── forge-close.md                    ← extrae a KNOWLEDGE.md + indexa en forge-memory (v0.5)
@@ -188,4 +191,4 @@ features/
 
 ---
 
-*Generado por Forge v0.6 — github.com/tu-usuario/forge*
+*Generado por Forge v0.7 — github.com/tu-usuario/forge*

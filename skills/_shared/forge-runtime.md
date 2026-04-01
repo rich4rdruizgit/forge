@@ -152,3 +152,38 @@ Cross-cutting errors reusable by any skill. Phase-specific errors (E050+, E100+,
 | E600–E609 | `forge-close` |
 | E700–E709 | `forge-status` |
 | E800–E809 | `forge-trace` / `forge-ref` |
+
+---
+
+## Sub-Agent Mode
+
+When a forge skill runs as a sub-agent (launched by the orchestrator via the Agent tool), the following adjustments apply:
+
+### R4 — Announce (Sub-Agent)
+
+Instead of outputting the announcement to the conversation, include it in the Return Contract output. The orchestrator will present status to the dev.
+
+### Return Contract Protocol
+
+Sub-agents MUST output a structured YAML block at the end of their response. The format is defined in each skill's "Return Contract" section. The orchestrator parses this to determine next actions.
+
+```yaml
+status: complete | partial | blocked | needs_input
+summary: "1-3 sentence summary"
+artifacts_written:
+  - path: {file_path}
+    action: created | updated
+metrics: {phase-specific}
+next_recommended: "{next forge command}"
+pending_decisions: []  # only for needs_input status
+risks: []
+```
+
+### Context Recovery in Sub-Agents
+
+Sub-agents start with ZERO conversation history. They recover context by:
+1. Reading files from disk (paths provided by orchestrator)
+2. Executing R0-R3 normally (forge-memory + config + FORGE.md + preconditions)
+3. Loading only their focused skill file (not the full forge-build.md)
+
+This is by design — fresh context means no accumulated token bloat.

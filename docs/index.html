@@ -664,6 +664,7 @@
     <li><a href="#depth">Depth</a></li>
     <li><a href="#quality">Quality</a></li>
     <li><a href="#memory">Memory</a></li>
+    <li><a href="#orchestrator">Orchestrator</a></li>
     <li><a href="#install">Install</a></li>
   </ul>
 </nav>
@@ -965,6 +966,34 @@
   </div>
 </section>
 
+<!-- ORCHESTRATOR -->
+<section id="orchestrator">
+  <div class="container">
+    <div class="fade-in">
+      <p class="section-label">v0.7 &mdash; Orchestrator</p>
+      <h2 class="section-title">Thin coordinator, focused sub-agents</h2>
+      <p class="section-subtitle">Heavy phases run in isolated contexts. The orchestrator maintains ~200 tokens of state. Each sub-agent starts fresh with zero accumulated history.</p>
+    </div>
+    <div class="card-grid fade-in" style="margin-top:2rem;">
+      <div class="card">
+        <div class="card-icon">&#x1F3AF;</div>
+        <h3>Inline <span style="font-size:0.75rem;color:var(--teal);font-weight:700;margin-left:0.4rem;">Interactive</span></h3>
+        <p><code style="font-family:var(--mono);font-size:0.85em;">forge new</code>, <code style="font-family:var(--mono);font-size:0.85em;">forge spec</code>, <code style="font-family:var(--mono);font-size:0.85em;">forge spike</code> &mdash; phases where the dev is in the loop stay in the main conversation.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#x1F916;</div>
+        <h3>Sub-agents <span style="font-size:0.75rem;color:var(--accent);font-weight:700;margin-left:0.4rem;">Autonomous</span></h3>
+        <p><code style="font-family:var(--mono);font-size:0.85em;">BUILD-RED</code>, <code style="font-family:var(--mono);font-size:0.85em;">BUILD-GREEN</code>, <code style="font-family:var(--mono);font-size:0.85em;">VERIFY</code>, <code style="font-family:var(--mono);font-size:0.85em;">APPROVE</code> &mdash; heavy work runs in fresh context with zero history bloat.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#x1F4C9;</div>
+        <h3>~75% less context</h3>
+        <p>Main conversation stays under 40k tokens. No compaction. No state loss. Sub-agents read artifacts from disk, not from conversation history.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- INSTALLATION -->
 <section class="install-section" id="install">
   <div class="container">
@@ -998,7 +1027,7 @@
   <p class="tagline">Built for teams that ship to production, not to demo.</p>
   <div class="links">
     <a href="https://github.com/rich4rdruizgit/forge" target="_blank" rel="noopener">GitHub</a>
-    <span>v0.6</span>
+    <span>v0.7</span>
     <span>Apache 2.0</span>
   </div>
 </footer>
@@ -1057,7 +1086,7 @@
     build: {
       title: 'BUILD', cmd: 'forge build',
       inText: 'Approved SPEC.md',
-      happens: 'RED: generate ALL tests \u2192 AUTO-GATE validates \u2192 GREEN: implement to pass tests',
+      happens: 'Orchestrator delegates to sub-agents: RED agent generates tests \u2192 AUTO-GATE validates \u2192 GREEN agent implements per-AC batch',
       outText: 'Tests + implementation code + traceability matrix',
       gate: 'forge approve \u2014 all tests green, traceability complete',
       hasSubflow: true
@@ -1079,10 +1108,10 @@
   };
 
   var autogateItems = [
-    'Each AC has \u22651 test',
+    'Risk coverage verified',
+    'Exclusion defense documented',
     'Tests verify behavior, not implementation',
-    'Error scenarios covered',
-    'Mock depth \u2264 2 layers'
+    'Ceiling compliance checked'
   ];
 
   var currentPhase = 0;
@@ -1120,11 +1149,11 @@
     if (d.hasSubflow) {
       html += '<div class="build-subflow visible" id="buildSubflow">';
       html += '<div class="subflow-track">';
-      html += '<div class="subflow-node"><div class="subflow-circle red">RED</div><span class="subflow-label">Write tests</span></div>';
+      html += '<div class="subflow-node"><div class="subflow-circle red">RED</div><span class="subflow-label">Test agent</span></div>';
       html += '<span class="subflow-arrow">\u2192</span>';
       html += '<div class="subflow-node"><div class="subflow-circle gate">\uD83D\uDD12</div><span class="subflow-label">Auto-gate</span></div>';
       html += '<span class="subflow-arrow">\u2192</span>';
-      html += '<div class="subflow-node"><div class="subflow-circle green">GO</div><span class="subflow-label">Implement</span></div>';
+      html += '<div class="subflow-node"><div class="subflow-circle green">GO</div><span class="subflow-label">Impl agent</span></div>';
       html += '<span class="subflow-arrow">\u2192</span>';
       html += '<div class="subflow-node"><div class="subflow-circle refactor">\u267B</div><span class="subflow-label">Refactor</span></div>';
       html += '</div>';
@@ -1133,7 +1162,7 @@
         html += '<div class="autogate-item"><span class="autogate-check">\u2713</span>' + item + '</div>';
       });
       html += '</div>';
-      html += '<div class="build-callout">\u26A0\uFE0F <strong>Tests are IMMUTABLE during GREEN.</strong> Only the dev can modify them.</div>';
+      html += '<div class="build-callout">\u26A0\uFE0F <strong>Each phase runs as an isolated sub-agent</strong> with fresh context. Tests are IMMUTABLE during GREEN.</div>';
       html += '</div>';
     }
 
@@ -1283,8 +1312,8 @@
     { text: '', delay: 4600 },
     { text: '<span class="prompt">$</span> <span class="cmd">forge build</span>', delay: 5000 },
     { text: '', delay: 5300 },
-    { text: '  <span class="info">&#x1F512; Auto-gate RED &rarr; GREEN</span>', delay: 5600 },
-    { text: '  Tests: <span class="highlight">5</span> | AC coverage: <span class="highlight">3/3</span> | Gate: <span class="success">PASSED</span>', delay: 5900 },
+    { text: '  <span class="info">&#x1F916; RED agent:</span> 5 tests generated | Gate: <span class="success">PASSED</span>', delay: 5600 },
+    { text: '  <span class="info">&#x1F916; GREEN agent:</span> 3/3 ACs implemented | <span class="success">All tests passing</span>', delay: 5900 },
     { text: '', delay: 6300 },
     { text: '<span class="prompt">$</span> <span class="cmd">forge verify</span> &rarr; <span class="cmd">forge close</span>', delay: 6600 },
     { text: '', delay: 6900 },
