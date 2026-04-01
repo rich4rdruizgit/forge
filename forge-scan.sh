@@ -417,11 +417,11 @@ detect_version_catalog() {
 
 detect_di_framework() {
     local hilt_count koin_count dagger_count
-    hilt_count=$(srg -l '(@Module|@InstallIn|@HiltAndroidApp|@HiltViewModel)' --type kotlin 2>/dev/null | wc -l | tr -d ' ')
+    hilt_count=$(srg -l '(@Module|@InstallIn|@HiltAndroidApp|@HiltViewModel)' --type kotlin . 2>/dev/null | wc -l | tr -d ' ')
     hilt_count="${hilt_count:-0}"
-    koin_count=$(srg -l '\b(single|factory|viewModel)\s*\{' --type kotlin 2>/dev/null | wc -l | tr -d ' ')
+    koin_count=$(srg -l '\b(single|factory|viewModel)\s*\{' --type kotlin . 2>/dev/null | wc -l | tr -d ' ')
     koin_count="${koin_count:-0}"
-    dagger_count=$(srg -l '(@Component|@Subcomponent|@Provides)' --type kotlin 2>/dev/null | wc -l | tr -d ' ')
+    dagger_count=$(srg -l '(@Component|@Subcomponent|@Provides)' --type kotlin . 2>/dev/null | wc -l | tr -d ' ')
     dagger_count="${dagger_count:-0}"
 
     if [[ $hilt_count -gt 0 ]]; then
@@ -482,16 +482,16 @@ detect_build_flavors() {
 estimate_project_age() {
     local age_signals=0
 
-    [[ -n "$(srg -l 'AsyncTask' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2)) || true
-    [[ -n "$(srg -l 'IntentService' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2)) || true
-    [[ -n "$(srg -l 'EventBus' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 1)) || true
+    [[ -n "$(srg -l 'AsyncTask' --type kotlin --type java . 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2)) || true
+    [[ -n "$(srg -l 'IntentService' --type kotlin --type java . 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2)) || true
+    [[ -n "$(srg -l 'EventBus' --type kotlin --type java . 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 1)) || true
     # Android Loader — match standalone Loader usage, not compound names like ImageLoader
-    [[ -n "$(srg -l '(extends Loader|: Loader[^a-zA-Z]|LoaderManager|LoaderCallbacks|CursorLoader|AsyncTaskLoader)' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 1)) || true
+    [[ -n "$(srg -l '(extends Loader|: Loader[^a-zA-Z]|LoaderManager|LoaderCallbacks|CursorLoader|AsyncTaskLoader)' --type kotlin --type java . 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 1)) || true
     local java_files
-    java_files=$(sfd -e java --type f 2>/dev/null | wc -l | tr -d ' ')
+    java_files=$(sfd -e java --type f . 2>/dev/null | wc -l | tr -d ' ')
     [[ $java_files -gt 10 ]] && age_signals=$((age_signals + 1)) || true
     [[ $java_files -gt 50 ]] && age_signals=$((age_signals + 1)) || true
-    [[ -n "$(srg -l 'android\.support\.' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2)) || true
+    [[ -n "$(srg -l 'android\.support\.' --type kotlin --type java . 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2)) || true
     $HAS_KAPT && ! $HAS_KSP && age_signals=$((age_signals + 1)) || true
 
     if [[ $age_signals -ge 4 ]]; then
@@ -509,9 +509,34 @@ estimate_project_age() {
     fi
 }
 
+PROJECT_NAME=""
+
+detect_project_name() {
+    # Try settings.gradle(.kts) rootProject.name
+    local settings_file=""
+    [[ -f "settings.gradle.kts" ]] && settings_file="settings.gradle.kts"
+    [[ -f "settings.gradle" ]]     && settings_file="settings.gradle"
+
+    if [[ -n "$settings_file" ]]; then
+        PROJECT_NAME=$(srg -o 'rootProject\.name\s*=\s*"([^"]+)"' --replace '$1' "$settings_file" | head -1)
+        # Also try single quotes
+        if [[ -z "$PROJECT_NAME" ]]; then
+            PROJECT_NAME=$(srg -o "rootProject\.name\s*=\s*'([^']+)'" --replace '$1' "$settings_file" | head -1)
+        fi
+    fi
+
+    # Fallback: directory name
+    if [[ -z "$PROJECT_NAME" ]]; then
+        PROJECT_NAME=$(basename "$PWD")
+    fi
+
+    [[ -n "$PROJECT_NAME" ]] && info "Proyecto: $PROJECT_NAME" || true
+}
+
 run_nivel1() {
     header "NIVEL 1 — Ficha técnica del proyecto"
 
+    detect_project_name
     detect_modules
     detect_gradle_version
     detect_sdk_versions
@@ -1104,6 +1129,7 @@ generate_yaml() {
         printf '\n# --- Nivel 1: Project-wide (siempre presente) ---\n\n'
 
         printf 'proyecto:\n'
+        printf '  nombre: %s\n' "$(yaml_escape "${PROJECT_NAME:-unknown}")"
         printf '  tipo: %s\n' "$PROJECT_TYPE"
         printf '  edad_estimada: "%s"\n' "$PROJECT_AGE"
         printf '  gradle_version: %s\n' "$(yaml_escape "${GRADLE_VERSION:-unknown}")"
@@ -1459,6 +1485,63 @@ print_summary() {
 }
 
 # ---------------------------------------------------------------------------
+# Update config.yaml with detected values
+# ---------------------------------------------------------------------------
+update_config() {
+    local config_file=".forge/config.yaml"
+    [[ ! -f "$config_file" ]] && return
+
+    info "Actualizando config.yaml con valores detectados..."
+
+    # proyecto.nombre
+    if [[ -n "$PROJECT_NAME" ]]; then
+        sed -i.bak "s|nombre: \"Mi Proyecto\"|nombre: \"$PROJECT_NAME\"|" "$config_file" || true
+        sed -i.bak "s|nombre: \".*\"|nombre: \"$PROJECT_NAME\"|" "$config_file" || true
+    fi
+
+    # proyecto.descripcion — auto-generate from detected data
+    local desc_parts=""
+    [[ "$ESTRUCTURA_TYPE" == "multi-module" ]] && desc_parts="Multi-module" || desc_parts="Single-module"
+    desc_parts="$desc_parts Android"
+    if [[ -n "$DI_FRAMEWORK" && "$DI_FRAMEWORK" != "manual" ]]; then
+        local di_cap
+        di_cap="$(printf '%s' "$DI_FRAMEWORK" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')"
+        desc_parts="$desc_parts + $di_cap"
+    fi
+    [[ $TOTAL_COMPOSABLES -gt 0 && $TOTAL_XML -eq 0 ]] && desc_parts="$desc_parts + Compose"
+    [[ $TOTAL_COMPOSABLES -gt 0 && $TOTAL_XML -gt 0 ]] && desc_parts="$desc_parts + Compose/XML"
+    [[ $TOTAL_XML -gt 0 && $TOTAL_COMPOSABLES -eq 0 ]] && desc_parts="$desc_parts + XML"
+    $HAS_COROUTINES && desc_parts="$desc_parts + Coroutines" || true
+    $HAS_RXJAVA && desc_parts="$desc_parts + RxJava" || true
+    sed -i.bak "s|descripcion: \"Descripción breve del proyecto\"|descripcion: \"$desc_parts\"|" "$config_file" || true
+
+    # stack.arquitectura
+    if [[ -n "$DOMINANT_PATTERN" && "$DOMINANT_PATTERN" != "unknown" ]]; then
+        sed -i.bak "s|arquitectura:.*|arquitectura: clean+$DOMINANT_PATTERN|" "$config_file" || true
+    fi
+
+    # stack.di
+    if [[ -n "$DI_FRAMEWORK" ]]; then
+        sed -i.bak "s|di:.*#\?.*|di: $DI_FRAMEWORK|" "$config_file" || true
+    fi
+
+    # stack.async
+    if $HAS_COROUTINES && $HAS_RXJAVA; then
+        sed -i.bak "s|async:.*|async: coroutines+rxjava|" "$config_file" || true
+    elif $HAS_RXJAVA; then
+        sed -i.bak "s|async:.*|async: rxjava|" "$config_file" || true
+    elif $HAS_COROUTINES; then
+        sed -i.bak "s|async:.*|async: coroutines|" "$config_file" || true
+    fi
+    # If only coroutines, default is already correct
+
+    # Cleanup .bak files
+    rm -f "${config_file}.bak"
+
+    success "config.yaml actualizado"
+}
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 main() {
@@ -1491,6 +1574,7 @@ main() {
 
     # Generate output
     generate_yaml
+    update_config
     print_summary
 
     printf "${GREEN}✔${NC} Listo. DNA guardado en ${BOLD}%s${NC}\n" "$DNA_FILE"
