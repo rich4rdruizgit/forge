@@ -12,7 +12,7 @@
 #
 # Compatible with bash 3.2+ (macOS default)
 
-set -euo pipefail
+set -uo pipefail
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -273,32 +273,51 @@ detect_gradle_version() {
     if [[ -f "$props_file" ]]; then
         GRADLE_VERSION=$(srg 'distributionUrl' "$props_file" | sed -E 's/.*gradle-([0-9]+\.[0-9]+(\.[0-9]+)?).*/\1/')
     fi
-    [[ -n "$GRADLE_VERSION" ]] && info "Gradle wrapper: $GRADLE_VERSION"
+    [[ -n "$GRADLE_VERSION" ]] && info "Gradle wrapper: $GRADLE_VERSION" || true
 }
 
 detect_sdk_versions() {
+    # Search module-level gradle files first (shallow)
     local gradle_files
     gradle_files=$(sfd -e gradle -e kts --max-depth 2 -t f)
-    [[ -z "$gradle_files" ]] && return
+
+    # Also search build-logic/ and buildSrc/ for convention plugins
+    local convention_files=""
+    if [[ -d "build-logic" ]]; then
+        convention_files=$(sfd -e gradle -e kts -t f . "build-logic" 2>/dev/null || true)
+    fi
+    if [[ -d "buildSrc" ]]; then
+        local buildsrc_files
+        buildsrc_files=$(sfd -e gradle -e kts -t f . "buildSrc" 2>/dev/null || true)
+        convention_files="${convention_files}${convention_files:+$'\n'}${buildsrc_files}"
+    fi
+
+    # Combine all gradle files for searching
+    local all_gradle_files="${gradle_files}${gradle_files:+$'\n'}${convention_files}"
+    all_gradle_files=$(printf '%s' "$all_gradle_files" | sed '/^$/d')
+
+    if [[ -z "$all_gradle_files" ]]; then
+        return
+    fi
 
     # Classic format: compileSdk = 34 / compileSdk(34) / compileSdkVersion 34
     if [[ -z "$COMPILE_SDK" ]]; then
-        COMPILE_SDK=$(echo "$gradle_files" | xargs rg '(compileSdk|compileSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
+        COMPILE_SDK=$(echo "$all_gradle_files" | xargs rg '(compileSdk|compileSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
     fi
     # New format (Android 16+): compileSdk { version = release(36) { ... } }
     if [[ -z "$COMPILE_SDK" ]]; then
-        COMPILE_SDK=$(echo "$gradle_files" | xargs rg 'release\(([0-9]+)\)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*release\(([0-9]+)\).*/\1/' || true)
+        COMPILE_SDK=$(echo "$all_gradle_files" | xargs rg 'release\(([0-9]+)\)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*release\(([0-9]+)\).*/\1/' || true)
     fi
     if [[ -z "$MIN_SDK" ]]; then
-        MIN_SDK=$(echo "$gradle_files" | xargs rg '(minSdk|minSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
+        MIN_SDK=$(echo "$all_gradle_files" | xargs rg '(minSdk|minSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
     fi
     if [[ -z "$TARGET_SDK" ]]; then
-        TARGET_SDK=$(echo "$gradle_files" | xargs rg '(targetSdk|targetSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
+        TARGET_SDK=$(echo "$all_gradle_files" | xargs rg '(targetSdk|targetSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
     fi
 
-    [[ -n "$COMPILE_SDK" ]] && info "compileSdk: $COMPILE_SDK"
-    [[ -n "$MIN_SDK" ]]     && info "minSdk: $MIN_SDK"
-    [[ -n "$TARGET_SDK" ]]  && info "targetSdk: $TARGET_SDK"
+    [[ -n "$COMPILE_SDK" ]] && info "compileSdk: $COMPILE_SDK" || true
+    [[ -n "$MIN_SDK" ]]     && info "minSdk: $MIN_SDK" || true
+    [[ -n "$TARGET_SDK" ]]  && info "targetSdk: $TARGET_SDK" || true
 }
 
 detect_version_catalog() {
@@ -334,18 +353,18 @@ detect_version_catalog() {
         # Extract kotlin and agp from catalog
         local v
         v=$(kv_get "catalog" "kotlin")
-        [[ -n "$v" ]] && KOTLIN_VERSION="$v"
+        [[ -n "$v" ]] && KOTLIN_VERSION="$v" || true
         v=$(kv_get "catalog" "agp")
-        [[ -n "$v" ]] && AGP_VERSION="$v"
+        [[ -n "$v" ]] && AGP_VERSION="$v" || true
         # Common aliases
         if [[ -z "$KOTLIN_VERSION" ]]; then
-            v=$(kv_get "catalog" "kotlinVersion"); [[ -n "$v" ]] && KOTLIN_VERSION="$v"
-            v=$(kv_get "catalog" "kotlin-version"); [[ -n "$v" ]] && KOTLIN_VERSION="$v"
+            v=$(kv_get "catalog" "kotlinVersion"); [[ -n "$v" ]] && KOTLIN_VERSION="$v" || true
+            v=$(kv_get "catalog" "kotlin-version"); [[ -n "$v" ]] && KOTLIN_VERSION="$v" || true
         fi
         if [[ -z "$AGP_VERSION" ]]; then
-            v=$(kv_get "catalog" "agpVersion"); [[ -n "$v" ]] && AGP_VERSION="$v"
-            v=$(kv_get "catalog" "agp-version"); [[ -n "$v" ]] && AGP_VERSION="$v"
-            v=$(kv_get "catalog" "androidGradlePlugin"); [[ -n "$v" ]] && AGP_VERSION="$v"
+            v=$(kv_get "catalog" "agpVersion"); [[ -n "$v" ]] && AGP_VERSION="$v" || true
+            v=$(kv_get "catalog" "agp-version"); [[ -n "$v" ]] && AGP_VERSION="$v" || true
+            v=$(kv_get "catalog" "androidGradlePlugin"); [[ -n "$v" ]] && AGP_VERSION="$v" || true
         fi
     else
         VERSION_CATALOG_SOURCE="build.gradle ext"
@@ -353,7 +372,7 @@ detect_version_catalog() {
 
         local root_gradle=""
         [[ -f "build.gradle" ]]     && root_gradle="build.gradle"
-        [[ -f "build.gradle.kts" ]] && root_gradle="build.gradle.kts"
+        [[ -f "build.gradle.kts" ]] && root_gradle="build.gradle.kts" || true
 
         if [[ -n "$root_gradle" ]]; then
             # Kotlin version
@@ -389,18 +408,21 @@ detect_version_catalog() {
         fi
     fi
 
-    [[ -n "$KOTLIN_VERSION" ]] && info "Kotlin: $KOTLIN_VERSION"
-    [[ -n "$AGP_VERSION" ]]    && info "AGP: $AGP_VERSION"
+    [[ -n "$KOTLIN_VERSION" ]] && info "Kotlin: $KOTLIN_VERSION" || true
+    [[ -n "$AGP_VERSION" ]]    && info "AGP: $AGP_VERSION" || true
     local cat_count
     cat_count=$(kv_keys "catalog" | wc -l | tr -d ' ')
-    [[ $cat_count -gt 0 ]] && info "Versiones detectadas en catálogo: $cat_count"
+    [[ $cat_count -gt 0 ]] && info "Versiones detectadas en catálogo: $cat_count" || true
 }
 
 detect_di_framework() {
     local hilt_count koin_count dagger_count
     hilt_count=$(srg -l '(@Module|@InstallIn|@HiltAndroidApp|@HiltViewModel)' --type kotlin 2>/dev/null | wc -l | tr -d ' ')
+    hilt_count="${hilt_count:-0}"
     koin_count=$(srg -l '\b(single|factory|viewModel)\s*\{' --type kotlin 2>/dev/null | wc -l | tr -d ' ')
+    koin_count="${koin_count:-0}"
     dagger_count=$(srg -l '(@Component|@Subcomponent|@Provides)' --type kotlin 2>/dev/null | wc -l | tr -d ' ')
+    dagger_count="${dagger_count:-0}"
 
     if [[ $hilt_count -gt 0 ]]; then
         DI_FRAMEWORK="hilt"
@@ -442,7 +464,7 @@ detect_ksp_kapt() {
 
 detect_build_flavors() {
     local has_flavors
-    has_flavors=$(srg -l 'productFlavors\s*\{' --type gradle 2>/dev/null)
+    has_flavors=$(srg -l 'productFlavors\s*\{' --type gradle 2>/dev/null || true)
     if [[ -n "$has_flavors" ]]; then
         local flavor_names
         # Extract lines after productFlavors { that look like "name {" but aren't keywords
@@ -460,16 +482,17 @@ detect_build_flavors() {
 estimate_project_age() {
     local age_signals=0
 
-    [[ -n "$(srg -l 'AsyncTask' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2))
-    [[ -n "$(srg -l 'IntentService' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2))
-    [[ -n "$(srg -l 'EventBus' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 1))
-    [[ -n "$(srg -l 'Loader' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 1))
+    [[ -n "$(srg -l 'AsyncTask' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2)) || true
+    [[ -n "$(srg -l 'IntentService' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2)) || true
+    [[ -n "$(srg -l 'EventBus' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 1)) || true
+    # Android Loader — match standalone Loader usage, not compound names like ImageLoader
+    [[ -n "$(srg -l '(extends Loader|: Loader[^a-zA-Z]|LoaderManager|LoaderCallbacks|CursorLoader|AsyncTaskLoader)' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 1)) || true
     local java_files
     java_files=$(sfd -e java --type f 2>/dev/null | wc -l | tr -d ' ')
-    [[ $java_files -gt 10 ]] && age_signals=$((age_signals + 1))
-    [[ $java_files -gt 50 ]] && age_signals=$((age_signals + 1))
-    [[ -n "$(srg -l 'android\.support\.' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2))
-    $HAS_KAPT && ! $HAS_KSP && age_signals=$((age_signals + 1))
+    [[ $java_files -gt 10 ]] && age_signals=$((age_signals + 1)) || true
+    [[ $java_files -gt 50 ]] && age_signals=$((age_signals + 1)) || true
+    [[ -n "$(srg -l 'android\.support\.' --type kotlin --type java 2>/dev/null | head -1)" ]] && age_signals=$((age_signals + 2)) || true
+    $HAS_KAPT && ! $HAS_KSP && age_signals=$((age_signals + 1)) || true
 
     if [[ $age_signals -ge 4 ]]; then
         PROJECT_TYPE="brownfield"
@@ -536,12 +559,12 @@ scan_module() {
     local is_app=false
     local build_f=""
     [[ -f "$mod_path/build.gradle" ]]     && build_f="$mod_path/build.gradle"
-    [[ -f "$mod_path/build.gradle.kts" ]] && build_f="$mod_path/build.gradle.kts"
+    [[ -f "$mod_path/build.gradle.kts" ]] && build_f="$mod_path/build.gradle.kts" || true
     if [[ -n "$build_f" ]]; then
         # Direct: id("com.android.application") or apply plugin: 'com.android.application'
-        rg -q 'com\.android\.application' "$build_f" 2>/dev/null && is_app=true
+        rg -q 'com\.android\.application' "$build_f" 2>/dev/null && is_app=true || true
         # Catalog alias: alias(libs.plugins.android.application)
-        ! $is_app && rg -q 'android\.application' "$build_f" 2>/dev/null && is_app=true
+        ! $is_app && rg -q 'android\.application' "$build_f" 2>/dev/null && is_app=true || true
     fi
     if $is_app; then
         kv_set "mod_meta" "$mod/tipo" "application"
@@ -582,9 +605,9 @@ scan_module() {
 
     # Architecture pattern detection
     local has_presenter=false has_viewmodel=false has_mvi=false
-    [[ -n "$(srg -l 'class\s+\w*Presenter' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && has_presenter=true
-    [[ -n "$(srg -l 'class\s+\w*ViewModel' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && has_viewmodel=true
-    [[ -n "$(srg -l '(sealed\s+(class|interface)\s+\w*(Intent|Action|Effect|SideEffect)|MviViewModel|MviStore)' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && has_mvi=true
+    [[ -n "$(srg -l 'class\s+\w*Presenter' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && has_presenter=true || true
+    [[ -n "$(srg -l 'class\s+\w*ViewModel' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && has_viewmodel=true || true
+    [[ -n "$(srg -l '(sealed\s+(class|interface)\s+\w*(Intent|Action|Effect|SideEffect)|MviViewModel|MviStore)' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && has_mvi=true || true
 
     local pattern="unknown"
     if $has_mvi; then
@@ -612,13 +635,13 @@ scan_module() {
     local test_frameworks="none"
     if [[ -d "$test_path" ]]; then
         test_frameworks=""
-        [[ -n "$(srg -l 'import org\.junit\.jupiter' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}junit5 "
-        [[ -n "$(srg -l 'import org\.junit\.' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}junit4 "
-        [[ -n "$(srg -l 'import io\.mockk' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}mockk "
-        [[ -n "$(srg -l 'import org\.mockito' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}mockito "
-        [[ -n "$(srg -l 'import io\.kotest' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}kotest "
-        [[ -n "$(srg -l 'import app\.cash\.turbine' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}turbine "
-        [[ -n "$(srg -l 'import kotlinx\.coroutines\.test' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}coroutines-test "
+        [[ -n "$(srg -l 'import org\.junit\.jupiter' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}junit5 " || true
+        [[ -n "$(srg -l 'import org\.junit\.' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}junit4 " || true
+        [[ -n "$(srg -l 'import io\.mockk' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}mockk " || true
+        [[ -n "$(srg -l 'import org\.mockito' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}mockito " || true
+        [[ -n "$(srg -l 'import io\.kotest' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}kotest " || true
+        [[ -n "$(srg -l 'import app\.cash\.turbine' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}turbine " || true
+        [[ -n "$(srg -l 'import kotlinx\.coroutines\.test' "$test_path" --type kotlin 2>/dev/null | head -1)" ]] && test_frameworks="${test_frameworks}coroutines-test " || true
         test_frameworks="${test_frameworks:-none}"
     fi
     kv_set "mod_meta" "$mod/test_frameworks" "$test_frameworks"
@@ -645,10 +668,10 @@ scan_module() {
 
     # Navigation
     local nav_pattern="none"
-    [[ -n "$(srg -l 'findNavController' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && nav_pattern="navigation-component"
-    [[ -n "$(srg -l 'NavHost|NavGraph' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && nav_pattern="compose-navigation"
+    [[ -n "$(srg -l 'findNavController' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && nav_pattern="navigation-component" || true
+    [[ -n "$(srg -l 'NavHost|NavGraph' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && nav_pattern="compose-navigation" || true
     if [[ "$nav_pattern" == "none" ]]; then
-        [[ -n "$(srg -l '(Router|Navigator)' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && nav_pattern="custom-router"
+        [[ -n "$(srg -l '(Router|Navigator)' --type kotlin "$mod_path/src" 2>/dev/null | head -1)" ]] && nav_pattern="custom-router" || true
     fi
     kv_set "mod_meta" "$mod/nav_pattern" "$nav_pattern"
 
@@ -657,9 +680,19 @@ scan_module() {
     event_bus=$(srg -o '(EventBus|Otto|LocalBroadcastManager|LiveDataBus)' --no-filename --type kotlin "$mod_path/src" 2>/dev/null | sort -u | tr '\n' ',' | sed 's/,$//')
     kv_set "mod_meta" "$mod/event_bus" "$event_bus"
 
-    # Forbidden patterns
+    # Forbidden patterns — AsyncTask and IntentService are always forbidden
     local forbidden
-    forbidden=$(srg -o '(AsyncTask|Loader|IntentService)' --no-filename --type kotlin --type java "$mod_path/src" 2>/dev/null | sort -u | tr '\n' ',' | sed 's/,$//')
+    forbidden=$(srg -o '(AsyncTask|IntentService)' --no-filename --type kotlin --type java "$mod_path/src" 2>/dev/null | sort -u | tr '\n' ',' | sed 's/,$//')
+    # Android Loader — only match actual Loader API usage, not compound names like ImageLoader/DataLoader
+    local loader_hits
+    loader_hits=$(srg -o '(extends Loader|: Loader[^a-zA-Z]|LoaderManager|LoaderCallbacks|CursorLoader|AsyncTaskLoader)' --no-filename --type kotlin --type java "$mod_path/src" 2>/dev/null | head -1)
+    if [[ -n "$loader_hits" ]]; then
+        if [[ -n "$forbidden" ]]; then
+            forbidden="${forbidden},Loader"
+        else
+            forbidden="Loader"
+        fi
+    fi
     kv_set "mod_meta" "$mod/forbidden" "$forbidden"
     if [[ -n "$forbidden" ]]; then
         ALL_FORBIDDEN_ENTRIES="${ALL_FORBIDDEN_ENTRIES}${ALL_FORBIDDEN_ENTRIES:+$'\n'}${mod}:${forbidden}"
@@ -668,7 +701,7 @@ scan_module() {
     # Module dependencies from build.gradle
     local build_file=""
     [[ -f "$mod_path/build.gradle" ]]     && build_file="$mod_path/build.gradle"
-    [[ -f "$mod_path/build.gradle.kts" ]] && build_file="$mod_path/build.gradle.kts"
+    [[ -f "$mod_path/build.gradle.kts" ]] && build_file="$mod_path/build.gradle.kts" || true
     if [[ -n "$build_file" ]]; then
         local mod_deps
         mod_deps=$(srg -o '(implementation|api|kapt|ksp)\s*[( ]+["'"'"']([^"'"'"']+)["'"'"']' --replace '$1: $2' "$build_file" 2>/dev/null | head -30)
@@ -720,7 +753,7 @@ interactive_select() {
             local sel
             sel=$(echo "$sel_arr" | awk -v n="$i" '{print $n}')
             local marker="[ ]"
-            [[ "$sel" == "1" ]] && marker="[x]"
+            [[ "$sel" == "1" ]] && marker="[x]" || true
             printf "  ${BOLD}%2d.${NC} %s %s ${DIM}(%s LOC est.)${NC}\n" "$i" "$marker" "$m" "$loc_fmt"
         done
         printf "\n"
@@ -831,24 +864,24 @@ CONFIDENCE="high"
 calculate_confidence() {
     local score=100
 
-    [[ -z "$KOTLIN_VERSION" ]] && score=$((score - 15))
-    [[ -z "$AGP_VERSION" ]]    && score=$((score - 10))
-    [[ -z "$MIN_SDK" ]]        && score=$((score - 10))
-    [[ -z "$GRADLE_VERSION" ]] && score=$((score - 5))
-    [[ $ALL_MODULES_COUNT -eq 0 ]] && score=$((score - 20))
+    [[ -z "$KOTLIN_VERSION" ]] && score=$((score - 15)) || true
+    [[ -z "$AGP_VERSION" ]]    && score=$((score - 10)) || true
+    [[ -z "$MIN_SDK" ]]        && score=$((score - 10)) || true
+    [[ -z "$GRADLE_VERSION" ]] && score=$((score - 5)) || true
+    [[ $ALL_MODULES_COUNT -eq 0 ]] && score=$((score - 20)) || true
 
     # Mixed architecture signals reduce confidence
     local pattern_count=0
     for p in mvp mvvm mvi; do
         local v
         v=$(kv_get "arch_mods" "$p")
-        [[ -n "$v" ]] && pattern_count=$((pattern_count + 1))
+        [[ -n "$v" ]] && pattern_count=$((pattern_count + 1)) || true
     done
-    [[ $pattern_count -gt 1 ]] && score=$((score - 10))
+    [[ $pattern_count -gt 1 ]] && score=$((score - 10)) || true
 
     local cat_count
     cat_count=$(kv_keys "catalog" | wc -l | tr -d ' ')
-    [[ $cat_count -eq 0 ]] && score=$((score - 15))
+    [[ $cat_count -eq 0 ]] && score=$((score - 15)) || true
 
     if [[ $score -ge 80 ]]; then
         CONFIDENCE="high"
@@ -881,7 +914,7 @@ TEST_RATIO=0
 
 compute_aggregates() {
     # Structure type
-    [[ $ALL_MODULES_COUNT -gt 1 ]] && ESTRUCTURA_TYPE="multi-module"
+    [[ $ALL_MODULES_COUNT -gt 1 ]] && ESTRUCTURA_TYPE="multi-module" || true
 
     # Dominant architecture pattern (prefer mvvm > mvi > mvp on tie)
     local max_count=0
@@ -899,8 +932,8 @@ compute_aggregates() {
     done
 
     # Async patterns
-    [[ $TOTAL_COROUTINES -gt 0 ]] && HAS_COROUTINES=true
-    [[ $TOTAL_RX -gt 0 ]]         && HAS_RXJAVA=true
+    [[ $TOTAL_COROUTINES -gt 0 ]] && HAS_COROUTINES=true || true
+    [[ $TOTAL_RX -gt 0 ]]         && HAS_RXJAVA=true || true
     if $HAS_COROUTINES && $HAS_RXJAVA; then
         ASYNC_MIGRATION="parcial"
     elif $HAS_COROUTINES; then
@@ -935,15 +968,15 @@ compute_aggregates() {
     cat_keys=$(kv_keys "catalog")
     all_deps="$all_deps $cat_keys"
 
-    printf '%s' "$all_deps" | rg -qi 'okhttp' 2>/dev/null    && HTTP_CLIENT="okhttp"
-    printf '%s' "$all_deps" | rg -qi 'retrofit' 2>/dev/null   && API_LAYER="retrofit"
-    printf '%s' "$all_deps" | rg -qi 'ktor' 2>/dev/null       && { [[ -z "$API_LAYER" ]] && API_LAYER="ktor"; }
-    printf '%s' "$all_deps" | rg -qi 'room' 2>/dev/null       && LOCAL_DB="room"
-    printf '%s' "$all_deps" | rg -qi 'realm' 2>/dev/null      && { [[ -z "$LOCAL_DB" ]] && LOCAL_DB="realm"; }
-    printf '%s' "$all_deps" | rg -qi 'sqldelight' 2>/dev/null && { [[ -z "$LOCAL_DB" ]] && LOCAL_DB="sqldelight"; }
-    printf '%s' "$all_deps" | rg -qi 'coil' 2>/dev/null       && IMAGE_LOADING="coil"
-    printf '%s' "$all_deps" | rg -qi 'glide' 2>/dev/null      && { [[ -z "$IMAGE_LOADING" ]] && IMAGE_LOADING="glide"; }
-    printf '%s' "$all_deps" | rg -qi 'picasso' 2>/dev/null    && { [[ -z "$IMAGE_LOADING" ]] && IMAGE_LOADING="picasso"; }
+    printf '%s' "$all_deps" | rg -qi 'okhttp' 2>/dev/null    && HTTP_CLIENT="okhttp" || true
+    printf '%s' "$all_deps" | rg -qi 'retrofit' 2>/dev/null   && API_LAYER="retrofit" || true
+    printf '%s' "$all_deps" | rg -qi 'ktor' 2>/dev/null       && { [[ -z "$API_LAYER" ]] && API_LAYER="ktor" || true; } || true
+    printf '%s' "$all_deps" | rg -qi 'room' 2>/dev/null       && LOCAL_DB="room" || true
+    printf '%s' "$all_deps" | rg -qi 'realm' 2>/dev/null      && { [[ -z "$LOCAL_DB" ]] && LOCAL_DB="realm" || true; } || true
+    printf '%s' "$all_deps" | rg -qi 'sqldelight' 2>/dev/null && { [[ -z "$LOCAL_DB" ]] && LOCAL_DB="sqldelight" || true; } || true
+    printf '%s' "$all_deps" | rg -qi 'coil' 2>/dev/null       && IMAGE_LOADING="coil" || true
+    printf '%s' "$all_deps" | rg -qi 'glide' 2>/dev/null      && { [[ -z "$IMAGE_LOADING" ]] && IMAGE_LOADING="glide" || true; } || true
+    printf '%s' "$all_deps" | rg -qi 'picasso' 2>/dev/null    && { [[ -z "$IMAGE_LOADING" ]] && IMAGE_LOADING="picasso" || true; } || true
 
     # Test frameworks aggregate
     local has_junit5=false has_junit4=false has_mockk=false has_mockito=false
@@ -1081,8 +1114,8 @@ generate_yaml() {
         printf '\nversion_catalog:\n'
         printf '  source: %s\n' "$(yaml_escape "$VERSION_CATALOG_SOURCE")"
         printf '  versions:\n'
-        [[ -n "$KOTLIN_VERSION" ]] && printf '    kotlin: "%s"\n' "$KOTLIN_VERSION"
-        [[ -n "$AGP_VERSION" ]]    && printf '    agp: "%s"\n' "$AGP_VERSION"
+        [[ -n "$KOTLIN_VERSION" ]] && printf '    kotlin: "%s"\n' "$KOTLIN_VERSION" || true
+        [[ -n "$AGP_VERSION" ]]    && printf '    agp: "%s"\n' "$AGP_VERSION" || true
         # Output all catalog versions (skip kotlin/agp duplicates)
         local cat_keys
         cat_keys=$(kv_keys "catalog" | sort)
@@ -1103,7 +1136,7 @@ generate_yaml() {
         if [[ -n "$BUILD_FLAVORS" ]]; then
             printf '\nbuild_flavors:\n'
             while IFS= read -r flavor; do
-                [[ -n "$flavor" ]] && printf '  - %s\n' "$flavor"
+                [[ -n "$flavor" ]] && printf '  - %s\n' "$flavor" || true
             done <<< "$BUILD_FLAVORS"
         fi
 
@@ -1186,8 +1219,8 @@ generate_yaml() {
             fi
             if [[ -n "$HTTP_CLIENT" || -n "$API_LAYER" ]]; then
                 printf '  networking:\n'
-                [[ -n "$HTTP_CLIENT" ]] && printf '    http_client: %s\n' "$HTTP_CLIENT"
-                [[ -n "$API_LAYER" ]]   && printf '    api_layer: %s\n' "$API_LAYER"
+                [[ -n "$HTTP_CLIENT" ]] && printf '    http_client: %s\n' "$HTTP_CLIENT" || true
+                [[ -n "$API_LAYER" ]]   && printf '    api_layer: %s\n' "$API_LAYER" || true
             fi
             if [[ -n "$LOCAL_DB" ]]; then
                 printf '  local_db:\n'
@@ -1219,13 +1252,13 @@ generate_yaml() {
                 [[ -z "$mp" ]] && continue
                 local tb
                 tb=$(srg -o 'abstract class (Base\w*Test\w*)' --replace '$1' --no-filename --type kotlin "$mp/src/test" 2>/dev/null | sort -u)
-                [[ -n "$tb" ]] && test_bases="${test_bases}${test_bases:+$'\n'}${tb}"
+                [[ -n "$tb" ]] && test_bases="${test_bases}${test_bases:+$'\n'}${tb}" || true
             done
             if [[ -n "$test_bases" ]]; then
                 printf '  infra_existente:\n'
                 printf '    base_test_classes:\n'
                 printf '%s\n' "$test_bases" | sort -u | while IFS= read -r tb; do
-                    [[ -n "$tb" ]] && printf '      - "%s"\n' "$tb"
+                    [[ -n "$tb" ]] && printf '      - "%s"\n' "$tb" || true
                 done
             fi
         fi
@@ -1316,7 +1349,9 @@ print_summary() {
     printf "  ${BOLD}AGP:${NC}            %s\n" "${AGP_VERSION:-no detectado}"
     local compose_bom
     compose_bom=$(kv_get "catalog" "compose-bom")
-    [[ -z "$compose_bom" ]] && compose_bom=$(kv_get "catalog" "composeBom")
+    [[ -z "$compose_bom" ]] && compose_bom=$(kv_get "catalog" "composeBom") || true
+    [[ -z "$compose_bom" ]] && compose_bom=$(kv_get "catalog" "androidxComposeBom") || true
+    [[ -z "$compose_bom" ]] && compose_bom=$(kv_get "catalog" "compose_bom") || true
     printf "  ${BOLD}Compose BOM:${NC}    %s\n" "${compose_bom:-no detectado}"
     printf "  ${BOLD}Gradle:${NC}         %s\n" "${GRADLE_VERSION:-no detectado}"
     printf "  ${BOLD}SDK:${NC}            min=%s target=%s compile=%s\n" "${MIN_SDK:-?}" "${TARGET_SDK:-?}" "${COMPILE_SDK:-?}"
@@ -1353,7 +1388,7 @@ print_summary() {
         for p in mvp mvvm mvi; do
             local mods
             mods=$(kv_get "arch_mods" "$p")
-            [[ -n "$mods" ]] && printf "                  ${DIM}%s:${NC} [%s]\n" "$p" "$mods"
+            [[ -n "$mods" ]] && printf "                  ${DIM}%s:${NC} [%s]\n" "$p" "$mods" || true
         done
 
         # Async
@@ -1394,8 +1429,8 @@ print_summary() {
                 local forbidden event_bus
                 forbidden=$(kv_get "mod_meta" "$mod/forbidden")
                 event_bus=$(kv_get "mod_meta" "$mod/event_bus")
-                [[ -n "$forbidden" ]] && warn "  $mod tiene patrones prohibidos: $forbidden"
-                [[ -n "$event_bus" ]]  && warn "  $mod usa comunicación legacy: $event_bus"
+                [[ -n "$forbidden" ]] && warn "  $mod tiene patrones prohibidos: $forbidden" || true
+                [[ -n "$event_bus" ]]  && warn "  $mod usa comunicación legacy: $event_bus" || true
             done
         fi
     fi

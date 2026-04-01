@@ -557,7 +557,7 @@ echo ""
 
 # Check forge-memory MCP status (Claude Code only)
 if [[ " ${DETECTED[*]} " == *" claude "* ]]; then
-  local mcp_file="$HOME/.claude/mcp/forge-memory.json"
+  mcp_file="$HOME/.claude/mcp/forge-memory.json"
   if [ -f "$mcp_file" ]; then
     echo "✅ forge-memory: configurado"
   else
