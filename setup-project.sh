@@ -2,7 +2,7 @@
 # FORGE — Setup project (local, no global changes)
 # Creates .forge/ in the target project and generates LLM adapters
 
-set -e
+set -euo pipefail
 
 FORGE_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(pwd)"
@@ -156,17 +156,18 @@ configure_claude_security() {
 ]
 EOF
 )
+  export _FORGE_DENY_RULES="$deny_rules"
 
   if [ -f "$settings_file" ]; then
     # Merge: add deny rules without overwriting existing config
-    python3 - "$settings_file" <<PYEOF
-import json, sys
+    python3 - "$settings_file" <<'PYEOF'
+import json, sys, os
 
 path = sys.argv[1]
 with open(path) as f:
     config = json.load(f)
 
-new_rules = $deny_rules
+new_rules = json.loads(os.environ.get("_FORGE_DENY_RULES", "[]"))
 
 perms = config.setdefault("permissions", {})
 existing = perms.get("deny", [])
@@ -179,11 +180,13 @@ PYEOF
     echo "  ✅ Reglas de seguridad mergeadas en $settings_file"
   else
     # Create fresh settings.json with security rules
-    python3 - <<PYEOF
-import json
-rules = $deny_rules
+    python3 - "$settings_file" <<'PYEOF'
+import json, sys, os
+
+rules = json.loads(os.environ.get("_FORGE_DENY_RULES", "[]"))
+settings_file = sys.argv[1]
 config = {"permissions": {"deny": rules}}
-with open("$settings_file", "w") as f:
+with open(settings_file, "w") as f:
     json.dump(config, f, indent=2)
 PYEOF
     echo "  ✅ $settings_file creado con reglas de seguridad"
@@ -379,10 +382,13 @@ setup_stack() {
       read -r custom_stack
       # sanitize: lowercase, no spaces
       STACK_NAME=$(echo "$custom_stack" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+      if [[ ! "$STACK_NAME" =~ ^[a-z0-9][a-z0-9-]{0,39}$ ]]; then
+          echo "Error: nombre de stack inválido. Solo letras minúsculas, números y guiones." >&2
+          exit 1
+      fi
       cp "$FORGE_REPO/stacks/TEMPLATE.md" "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md"
       # Replace {nombre} placeholder in the template
-      sed -i.bak "s/{nombre}/$STACK_NAME/g" "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md"
-      rm -f "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md.bak"
+      awk -v val="$STACK_NAME" '{ gsub(/\{nombre\}/, val) } { print }' "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md" > "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md.tmp" && mv "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md.tmp" "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md"
       echo "✅ Plantilla generada: .forge/stack-skills/$STACK_NAME.md"
       echo "   ⚠️  Completá todas las secciones antes de usar forge spec/build."
       ;;
@@ -408,7 +414,7 @@ mkdir -p .forge/stack-skills
 mkdir -p .forge/skills        && cp "$FORGE_REPO/skills/forge-"*.md .forge/skills/
 mkdir -p .forge/skills/_shared && cp "$FORGE_REPO/skills/_shared/"*.md .forge/skills/_shared/
 # Ensure all .forge files are readable (fixes Gemini CLI and other tools)
-chmod -R u+r,go+r .forge/
+chmod -R u+rwX,go-rwx .forge/
 echo "✅ .forge/ creado"
 echo ""
 
@@ -416,8 +422,7 @@ echo ""
 setup_stack
 
 # Update stack in config.yaml
-sed -i.bak "s/plataforma: android/plataforma: $STACK_NAME/g" "$PROJECT_ROOT/.forge/config.yaml"
-rm -f "$PROJECT_ROOT/.forge/config.yaml.bak"
+awk -v val="$STACK_NAME" '/plataforma: android/ { sub(/plataforma: android/, "plataforma: " val) } { print }' "$PROJECT_ROOT/.forge/config.yaml" > "$PROJECT_ROOT/.forge/config.yaml.tmp" && mv "$PROJECT_ROOT/.forge/config.yaml.tmp" "$PROJECT_ROOT/.forge/config.yaml"
 echo ""
 
 # 2. Detect installed tools
@@ -470,7 +475,15 @@ if [ -n "$extra" ]; then
         echo "Ya estaba detectada ✅"
       else
         # Check if installed
-        if detect_"$extra" 2>/dev/null; then
+        local _detected=false
+        case "$extra" in
+          claude)   detect_claude   2>/dev/null && _detected=true ;;
+          cursor)   detect_cursor   2>/dev/null && _detected=true ;;
+          copilot)  detect_copilot  2>/dev/null && _detected=true ;;
+          windsurf) detect_windsurf 2>/dev/null && _detected=true ;;
+          gemini)   detect_gemini   2>/dev/null && _detected=true ;;
+        esac
+        if $_detected; then
           DETECTED+=("$extra")
           echo "  Agregada: $extra"
         else
