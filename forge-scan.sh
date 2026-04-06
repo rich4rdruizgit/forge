@@ -146,8 +146,11 @@ kv_keys() {
 
 kv_cleanup() {
     rm -f "$KV_STORE_FILE"
+    rm -f .forge/*.bak
 }
 trap kv_cleanup EXIT
+trap 'kv_cleanup; exit 130' INT
+trap 'kv_cleanup; exit 143' TERM
 
 # ---------------------------------------------------------------------------
 # Preflight checks
@@ -175,7 +178,7 @@ preflight() {
 # Parse arguments
 # ---------------------------------------------------------------------------
 MODE="full"
-SELECTED_MODULES=""  # space-separated
+SELECTED_MODULES=()  # bash array
 
 parse_args() {
     if [[ $# -eq 0 ]]; then
@@ -201,7 +204,7 @@ parse_args() {
             ;;
         *)
             MODE="selective"
-            SELECTED_MODULES="$*"
+            SELECTED_MODULES=("$@")
             ;;
     esac
 }
@@ -210,7 +213,7 @@ parse_args() {
 # Nivel 1 — Project-wide scan
 # ---------------------------------------------------------------------------
 
-ALL_MODULES=""       # space-separated module names
+ALL_MODULES=()       # bash array of module names
 ALL_MODULES_COUNT=0
 
 GRADLE_VERSION=""
@@ -242,7 +245,7 @@ detect_modules() {
         if [[ -d "${mod_path}/src/main" ]]; then
             local mod_name
             mod_name=$(basename "$mod_path")
-            ALL_MODULES="$ALL_MODULES $mod_name"
+            ALL_MODULES+=("$mod_name")
             kv_set "modpath" "$mod_name" "$mod_path"
             ALL_MODULES_COUNT=$((ALL_MODULES_COUNT + 1))
         fi
@@ -251,23 +254,20 @@ detect_modules() {
     # Also check root project if it has src/main
     if [[ -d "src/main" ]]; then
         local has_app=false
-        for m in $ALL_MODULES; do
+        for m in "${ALL_MODULES[@]}"; do
             [[ "$m" == "app" ]] && { has_app=true; break; }
         done
         if ! $has_app; then
-            ALL_MODULES="$ALL_MODULES app"
+            ALL_MODULES+=("app")
             kv_set "modpath" "app" "."
             ALL_MODULES_COUNT=$((ALL_MODULES_COUNT + 1))
         fi
     fi
 
-    # Trim leading space
-    ALL_MODULES="${ALL_MODULES# }"
-
     if [[ $ALL_MODULES_COUNT -eq 0 ]]; then
         warn "No se detectaron módulos con src/main. Proyecto vacío o estructura no estándar."
     else
-        success "Detectados $ALL_MODULES_COUNT módulo(s): $ALL_MODULES"
+        success "Detectados $ALL_MODULES_COUNT módulo(s): ${ALL_MODULES[*]}"
     fi
 }
 
@@ -761,33 +761,28 @@ quick_loc_estimate() {
 # ---------------------------------------------------------------------------
 interactive_select() {
     # Convert ALL_MODULES to indexed arrays
-    local i=0
-    local mod_arr=""
-    local sel_arr=""
-    for m in $ALL_MODULES; do
-        mod_arr="${mod_arr}${mod_arr:+ }$m"
+    local mod_arr=()
+    local sel_arr=()
+    for m in "${ALL_MODULES[@]}"; do
+        mod_arr+=("$m")
         if [[ "$m" == "app" ]]; then
-            sel_arr="${sel_arr}${sel_arr:+ }1"
+            sel_arr+=(1)
         else
-            sel_arr="${sel_arr}${sel_arr:+ }0"
+            sel_arr+=(0)
         fi
-        i=$((i + 1))
     done
 
     while true; do
         printf "\n${BOLD}Proyecto: %d módulos detectados${NC}\n\n" "$ALL_MODULES_COUNT"
-        i=0
-        for m in $mod_arr; do
-            i=$((i + 1))
-            local loc_est
+        local i=0
+        for m in "${mod_arr[@]}"; do
+            local loc_est loc_fmt marker
             loc_est=$(quick_loc_estimate "$m")
-            local loc_fmt
             loc_fmt=$(format_loc "$loc_est")
-            local sel
-            sel=$(echo "$sel_arr" | awk -v n="$i" '{print $n}')
-            local marker="[ ]"
-            [[ "$sel" == "1" ]] && marker="[x]" || true
-            printf "  ${BOLD}%2d.${NC} %s %s ${DIM}(%s LOC est.)${NC}\n" "$i" "$marker" "$m" "$loc_fmt"
+            marker="[ ]"
+            [[ "${sel_arr[$i]}" == "1" ]] && marker="[x]"
+            printf "  ${BOLD}%2d.${NC} %s %s ${DIM}(%s LOC est.)${NC}\n" "$((i + 1))" "$marker" "$m" "$loc_fmt"
+            i=$((i + 1))
         done
         printf "\n"
         printf "Ingresá números separados por espacio para toggle (Enter = confirmar): "
@@ -799,44 +794,32 @@ interactive_select() {
 
         for num in $input; do
             if [[ "$num" =~ ^[0-9]+$ ]] && [[ $num -ge 1 ]] && [[ $num -le $ALL_MODULES_COUNT ]]; then
-                # Toggle the selection
-                local new_sel=""
-                local j=0
-                for s in $sel_arr; do
-                    j=$((j + 1))
-                    if [[ $j -eq $num ]]; then
-                        if [[ "$s" == "1" ]]; then
-                            new_sel="${new_sel}${new_sel:+ }0"
-                        else
-                            new_sel="${new_sel}${new_sel:+ }1"
-                        fi
-                    else
-                        new_sel="${new_sel}${new_sel:+ }$s"
-                    fi
-                done
-                sel_arr="$new_sel"
+                local idx=$(( num - 1 ))
+                if [[ "${sel_arr[$idx]}" == "1" ]]; then
+                    sel_arr[$idx]=0
+                else
+                    sel_arr[$idx]=1
+                fi
             else
                 warn "Número inválido: $num"
             fi
         done
     done
 
-    SELECTED_MODULES=""
-    i=0
-    for m in $mod_arr; do
-        i=$((i + 1))
-        local sel
-        sel=$(echo "$sel_arr" | awk -v n="$i" '{print $n}')
-        if [[ "$sel" == "1" ]]; then
-            SELECTED_MODULES="${SELECTED_MODULES}${SELECTED_MODULES:+ }$m"
+    SELECTED_MODULES=()
+    local i=0
+    for m in "${mod_arr[@]}"; do
+        if [[ "${sel_arr[$i]}" == "1" ]]; then
+            SELECTED_MODULES+=("$m")
         fi
+        i=$((i + 1))
     done
 
-    if [[ -z "$SELECTED_MODULES" ]]; then
+    if [[ ${#SELECTED_MODULES[@]} -eq 0 ]]; then
         warn "No se seleccionó ningún módulo. Solo se generará Nivel 1."
         MODE="project-only"
     else
-        success "Módulos seleccionados: $SELECTED_MODULES"
+        success "Módulos seleccionados: ${SELECTED_MODULES[*]}"
     fi
 }
 
@@ -846,42 +829,42 @@ interactive_select() {
 resolve_modules() {
     case "$MODE" in
         full)
-            SELECTED_MODULES="$ALL_MODULES"
+            SELECTED_MODULES=("${ALL_MODULES[@]}")
             ;;
         interactive)
             interactive_select
             ;;
         selective)
             # Validate selected modules exist
-            local valid=""
-            for m in $SELECTED_MODULES; do
+            local valid=()
+            for m in "${SELECTED_MODULES[@]}"; do
                 local mp
                 mp=$(kv_get "modpath" "$m")
                 if [[ -n "$mp" ]]; then
-                    valid="${valid}${valid:+ }$m"
+                    valid+=("$m")
                 else
                     warn "Módulo '$m' no encontrado en el proyecto. Ignorando."
                 fi
             done
-            SELECTED_MODULES="$valid"
-            if [[ -z "$SELECTED_MODULES" ]]; then
+            SELECTED_MODULES=("${valid[@]+"${valid[@]}"}")
+            if [[ ${#SELECTED_MODULES[@]} -eq 0 ]]; then
                 errlog "Ninguno de los módulos especificados existe."
                 exit 1
             fi
             ;;
         project-only)
-            SELECTED_MODULES=""
+            SELECTED_MODULES=()
             ;;
     esac
 }
 
 run_nivel2() {
-    [[ -z "$SELECTED_MODULES" ]] && return
+    [[ ${#SELECTED_MODULES[@]} -eq 0 ]] && return
 
     header "NIVEL 2 — Análisis por módulo"
 
     local count=0
-    for mod in $SELECTED_MODULES; do
+    for mod in "${SELECTED_MODULES[@]}"; do
         scan_module "$mod" || true
         count=$((count + 1))
     done
@@ -991,7 +974,7 @@ compute_aggregates() {
 
     # Detect networking, DB, image loading from all deps and catalog
     local all_deps=""
-    for mod in $SELECTED_MODULES; do
+    for mod in "${SELECTED_MODULES[@]}"; do
         local d
         d=$(kv_get "mod_meta" "$mod/deps")
         all_deps="$all_deps $d"
@@ -1013,7 +996,7 @@ compute_aggregates() {
 
     # Test frameworks aggregate
     local has_junit5=false has_junit4=false has_mockk=false has_mockito=false
-    for mod in $SELECTED_MODULES; do
+    for mod in "${SELECTED_MODULES[@]}"; do
         local tf
         tf=$(kv_get "mod_meta" "$mod/test_frameworks")
         [[ "$tf" == *junit5* ]]          && has_junit5=true
@@ -1030,7 +1013,7 @@ compute_aggregates() {
     fi
 
     # Navigation aggregate
-    for mod in $SELECTED_MODULES; do
+    for mod in "${SELECTED_MODULES[@]}"; do
         local np
         np=$(kv_get "mod_meta" "$mod/nav_pattern")
         if [[ -n "$np" && "$np" != "none" ]]; then
@@ -1041,7 +1024,7 @@ compute_aggregates() {
 
     # Test ratio estimate
     local total_test_files=0 total_src_files=0
-    for mod in $SELECTED_MODULES; do
+    for mod in "${SELECTED_MODULES[@]}"; do
         local mp
         mp=$(kv_get "modpath" "$mod")
         [[ -z "$mp" ]] && continue
@@ -1115,12 +1098,12 @@ generate_yaml() {
     # Build scanned/pending module lists
     local scanned_list=""
     local pending_list=""
-    for mod in $SELECTED_MODULES; do
+    for mod in "${SELECTED_MODULES[@]}"; do
         scanned_list="${scanned_list}${scanned_list:+, }\"$mod\""
     done
-    for mod in $ALL_MODULES; do
+    for mod in "${ALL_MODULES[@]}"; do
         local is_scanned=false
-        for s in $SELECTED_MODULES; do
+        for s in "${SELECTED_MODULES[@]}"; do
             [[ "$s" == "$mod" ]] && { is_scanned=true; break; }
         done
         if ! $is_scanned; then
@@ -1191,7 +1174,7 @@ generate_yaml() {
         fi
 
         # --- Nivel 2: Per-module ---
-        if [[ -n "$SELECTED_MODULES" || $ALL_MODULES_COUNT -gt 0 ]]; then
+        if [[ ${#SELECTED_MODULES[@]} -gt 0 || $ALL_MODULES_COUNT -gt 0 ]]; then
             printf '\n# --- Nivel 2: Per-module (solo modulos escaneados) ---\n\n'
 
             printf 'estructura:\n'
@@ -1199,7 +1182,7 @@ generate_yaml() {
             printf '  modulos:\n'
 
             # Scanned modules with full data
-            for mod in $SELECTED_MODULES; do
+            for mod in "${SELECTED_MODULES[@]}"; do
                 local tipo loc xml comp
                 tipo=$(kv_get "mod_meta" "$mod/tipo")
                 loc=$(kv_get "mod_meta" "$mod/loc")
@@ -1214,9 +1197,9 @@ generate_yaml() {
             done
 
             # Unscanned modules
-            for mod in $ALL_MODULES; do
+            for mod in "${ALL_MODULES[@]}"; do
                 local is_scanned=false
-                for s in $SELECTED_MODULES; do
+                for s in "${SELECTED_MODULES[@]}"; do
                     [[ "$s" == "$mod" ]] && { is_scanned=true; break; }
                 done
                 if ! $is_scanned; then
@@ -1227,7 +1210,7 @@ generate_yaml() {
             done
 
             # UI paradigm
-            if [[ -n "$SELECTED_MODULES" ]]; then
+            if [[ ${#SELECTED_MODULES[@]} -gt 0 ]]; then
                 printf '  ui_paradigma:\n'
                 printf '    xml_pct: %d\n' "$UI_XML_PCT"
                 printf '    compose_pct: %d\n' "$UI_COMPOSE_PCT"
@@ -1236,7 +1219,7 @@ generate_yaml() {
         fi
 
         # Architecture
-        if [[ -n "$SELECTED_MODULES" ]]; then
+        if [[ ${#SELECTED_MODULES[@]} -gt 0 ]]; then
             printf '\narquitectura:\n'
             printf '  patron_dominante: %s\n' "$DOMINANT_PATTERN"
             printf '  patrones_detectados:\n'
@@ -1260,7 +1243,7 @@ generate_yaml() {
         printf '  di:\n'
         printf '    framework: %s\n' "$DI_FRAMEWORK"
         printf '    procesador: %s\n' "$DI_PROCESSOR"
-        if [[ -n "$SELECTED_MODULES" ]]; then
+        if [[ ${#SELECTED_MODULES[@]} -gt 0 ]]; then
             printf '  async:\n'
             printf '    coroutines: %s\n' "$HAS_COROUTINES"
             printf '    rxjava: %s\n' "$HAS_RXJAVA"
@@ -1286,7 +1269,7 @@ generate_yaml() {
         fi
 
         # Testing
-        if [[ -n "$SELECTED_MODULES" ]]; then
+        if [[ ${#SELECTED_MODULES[@]} -gt 0 ]]; then
             printf '\ntesting:\n'
             printf '  frameworks:\n'
             printf '    unit: %s\n' "$TEST_UNIT_FRAMEWORK"
@@ -1296,7 +1279,7 @@ generate_yaml() {
 
             # Test infra: base test classes
             local test_bases=""
-            for mod in $SELECTED_MODULES; do
+            for mod in "${SELECTED_MODULES[@]}"; do
                 local mp
                 mp=$(kv_get "modpath" "$mod")
                 [[ -z "$mp" ]] && continue
@@ -1314,9 +1297,9 @@ generate_yaml() {
         fi
 
         # Legacy patterns
-        if [[ -n "$SELECTED_MODULES" ]]; then
+        if [[ ${#SELECTED_MODULES[@]} -gt 0 ]]; then
             local has_legacy=false
-            for mod in $SELECTED_MODULES; do
+            for mod in "${SELECTED_MODULES[@]}"; do
                 local forbidden event_bus
                 forbidden=$(kv_get "mod_meta" "$mod/forbidden")
                 event_bus=$(kv_get "mod_meta" "$mod/event_bus")
@@ -1329,7 +1312,7 @@ generate_yaml() {
             if $has_legacy; then
                 printf '\npatrones_legacy:\n'
                 printf '  activos:\n'
-                for mod in $SELECTED_MODULES; do
+                for mod in "${SELECTED_MODULES[@]}"; do
                     local forbidden
                     forbidden=$(kv_get "mod_meta" "$mod/forbidden")
                     if [[ -n "$forbidden" ]]; then
@@ -1358,7 +1341,7 @@ generate_yaml() {
             fi
 
             # First sealed Result/Either/Resource type found
-            for mod in $SELECTED_MODULES; do
+            for mod in "${SELECTED_MODULES[@]}"; do
                 local sealed
                 sealed=$(kv_get "mod_meta" "$mod/sealed_types")
                 if [[ -n "$sealed" ]]; then
@@ -1409,17 +1392,14 @@ print_summary() {
 
     # Module breakdown
     printf "\n  ${BOLD}Módulos:${NC}        %d total" "$ALL_MODULES_COUNT"
-    local selected_count=0
-    for m in $SELECTED_MODULES; do
-        selected_count=$((selected_count + 1))
-    done
+    local selected_count=${#SELECTED_MODULES[@]}
     if [[ $selected_count -gt 0 && $selected_count -lt $ALL_MODULES_COUNT ]]; then
         printf " (%d escaneados)" "$selected_count"
     fi
     printf "\n"
 
-    if [[ -n "$SELECTED_MODULES" ]]; then
-        for mod in $SELECTED_MODULES; do
+    if [[ ${#SELECTED_MODULES[@]} -gt 0 ]]; then
+        for mod in "${SELECTED_MODULES[@]}"; do
             local loc xml comp arch_p
             loc=$(kv_get "mod_meta" "$mod/loc")
             xml=$(kv_get "mod_meta" "$mod/xml_layouts")
@@ -1433,7 +1413,7 @@ print_summary() {
     fi
 
     # Architecture
-    if [[ -n "$SELECTED_MODULES" ]]; then
+    if [[ ${#SELECTED_MODULES[@]} -gt 0 ]]; then
         printf "\n  ${BOLD}Arquitectura:${NC}   %s (dominante)\n" "$DOMINANT_PATTERN"
         for p in mvp mvvm mvi; do
             local mods
@@ -1461,9 +1441,9 @@ print_summary() {
     fi
 
     # Warnings for legacy/forbidden patterns
-    if [[ -n "$SELECTED_MODULES" ]]; then
+    if [[ ${#SELECTED_MODULES[@]} -gt 0 ]]; then
         local has_warnings=false
-        for mod in $SELECTED_MODULES; do
+        for mod in "${SELECTED_MODULES[@]}"; do
             local forbidden event_bus
             forbidden=$(kv_get "mod_meta" "$mod/forbidden")
             event_bus=$(kv_get "mod_meta" "$mod/event_bus")
@@ -1475,7 +1455,7 @@ print_summary() {
 
         if $has_warnings; then
             printf "\n  ${YELLOW}${BOLD}ADVERTENCIAS:${NC}\n"
-            for mod in $SELECTED_MODULES; do
+            for mod in "${SELECTED_MODULES[@]}"; do
                 local forbidden event_bus
                 forbidden=$(kv_get "mod_meta" "$mod/forbidden")
                 event_bus=$(kv_get "mod_meta" "$mod/event_bus")
@@ -1598,7 +1578,7 @@ main() {
     run_nivel2
 
     # Aggregates and confidence
-    if [[ -n "$SELECTED_MODULES" ]]; then
+    if [[ ${#SELECTED_MODULES[@]} -gt 0 ]]; then
         compute_aggregates
     fi
     calculate_confidence

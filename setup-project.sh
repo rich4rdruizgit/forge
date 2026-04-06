@@ -156,17 +156,18 @@ configure_claude_security() {
 ]
 EOF
 )
+  export _FORGE_DENY_RULES="$deny_rules"
 
   if [ -f "$settings_file" ]; then
     # Merge: add deny rules without overwriting existing config
-    python3 - "$settings_file" <<PYEOF
-import json, sys
+    python3 - "$settings_file" <<'PYEOF'
+import json, sys, os
 
 path = sys.argv[1]
 with open(path) as f:
     config = json.load(f)
 
-new_rules = $deny_rules
+new_rules = json.loads(os.environ.get("_FORGE_DENY_RULES", "[]"))
 
 perms = config.setdefault("permissions", {})
 existing = perms.get("deny", [])
@@ -179,11 +180,13 @@ PYEOF
     echo "  ✅ Reglas de seguridad mergeadas en $settings_file"
   else
     # Create fresh settings.json with security rules
-    python3 - <<PYEOF
-import json
-rules = $deny_rules
+    python3 - "$settings_file" <<'PYEOF'
+import json, sys, os
+
+rules = json.loads(os.environ.get("_FORGE_DENY_RULES", "[]"))
+settings_file = sys.argv[1]
 config = {"permissions": {"deny": rules}}
-with open("$settings_file", "w") as f:
+with open(settings_file, "w") as f:
     json.dump(config, f, indent=2)
 PYEOF
     echo "  ✅ $settings_file creado con reglas de seguridad"
