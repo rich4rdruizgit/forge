@@ -215,6 +215,18 @@ pillars:
           Tests ignorados en la suite existente: documentar razón en TRACEABILITY.md.
         evidence_hint: "Tests con @Ignore o @Disabled"
 
+      - id: P3-BUILD-TEST-001
+        pillar: P3
+        description: "Test suite ejecutada y evidencia de resultado en TRACEABILITY.md"
+        severity: blocker
+        verification: |
+          TRACEABILITY.md contiene sección "## Test Execution" con:
+          - Runner detectado (no vacío)
+          - Resultado = "✅ PASSED"
+          - Al menos 1 test passed (tests_passed > 0)
+          Una sección ausente, un resultado "❌ FAILED", o tests_passed = 0 son blocker.
+        evidence_hint: "Sección ## Test Execution en TRACEABILITY.md"
+
   # ─────────────────────────────────────────────
   # P4 — Integración con lo Existente
   # ¿El código nuevo no duplica ni rompe lo que ya existe?

@@ -201,6 +201,51 @@ Do NOT modify SPEC.md yourself. Do NOT guess the answer. STOP and return.
 
 ---
 
+## Step B_FINAL — Execute test suite
+
+Invoke `_shared/test-runner.md`. Wait for the return values before continuing.
+
+### If `test_execution_result == PASSED`
+
+Proceed to the Return Contract with `status: complete`.
+Include in the Return Contract under `metrics`:
+
+```yaml
+test_execution:
+  result: PASSED
+  runner: {test_runner}
+  mode: {test_execution_mode}
+```
+
+### If `test_execution_result == FAILED`
+
+Do NOT return `status: complete`. Do NOT advance to `forge approve`.
+
+Return immediately:
+
+```yaml
+status: tests_failing
+summary: "Tests fallando — BUILD bloqueado hasta resolver los tests en rojo."
+failed_tests:
+  - {each test name from failed_tests}
+action_required: >
+  Corregí los tests fallidos. Los tests RED son inmutables — si un test falla
+  por un bug en el test mismo, pedí aprobación explícita del dev antes de modificarlo.
+```
+
+### If `test_execution_result == SKIPPED`
+
+Return immediately:
+
+```yaml
+status: awaiting_test_confirmation
+summary: "Esperando output de tests del dev."
+action_required: >
+  Ejecutá los tests y pegá el output para continuar.
+```
+
+---
+
 ## Return Contract
 
 When running as a sub-agent, output this structured result at the end:

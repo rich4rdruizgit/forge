@@ -38,6 +38,19 @@
 | AC_ID | Tiene evento | Tiene test | Tiene impl |
 |-------|-------------|-----------|-----------|
 
+## Test Execution
+
+| Campo | Valor |
+|-------|-------|
+| Runner detectado | — |
+| Comando | — |
+| Modo | — |
+| Resultado | — |
+| Tests passed | — |
+| Tests failed | — |
+| Tests skipped | — |
+| Fecha | — |
+
 ## Resumen
 
 - ACs con cadena completa: 0/0

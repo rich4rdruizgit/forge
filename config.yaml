@@ -40,6 +40,9 @@ validacion:
     PROFUNDA: 2
 
 testing:
+  # test_command: "./gradlew test"   # Override opcional. Si está vacío, se detecta automáticamente.
+  #                                   # Útil para proyectos con comandos no estándar o monorepos.
+  #                                   # Ejemplos: "npm test", "cargo test", "pytest -x", "make test"
   estrategia: risk-based        # risk-based | comprehensive (default: risk-based)
   justificacion_requerida: true  # toda inclusión y exclusión de test debe ser defendida
   presupuesto:                   # TECHOS máximos, NO targets — el agente decide cuántos tests necesita
