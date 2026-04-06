@@ -1137,8 +1137,8 @@ generate_yaml() {
         printf '\nversion_catalog:\n'
         printf '  source: %s\n' "$(yaml_escape "$VERSION_CATALOG_SOURCE")"
         printf '  versions:\n'
-        [[ -n "$KOTLIN_VERSION" ]] && printf '    kotlin: "%s"\n' "$KOTLIN_VERSION" || true
-        [[ -n "$AGP_VERSION" ]]    && printf '    agp: "%s"\n' "$AGP_VERSION" || true
+        [[ -n "$KOTLIN_VERSION" ]] && printf '    kotlin: %s\n' "$(yaml_escape "$KOTLIN_VERSION")" || true
+        [[ -n "$AGP_VERSION" ]]    && printf '    agp: %s\n'    "$(yaml_escape "$AGP_VERSION")"    || true
         # Output all catalog versions (skip kotlin/agp duplicates)
         local cat_keys
         cat_keys=$(kv_keys "catalog" | sort)
