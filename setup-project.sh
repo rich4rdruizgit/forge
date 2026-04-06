@@ -2,7 +2,7 @@
 # FORGE — Setup project (local, no global changes)
 # Creates .forge/ in the target project and generates LLM adapters
 
-set -e
+set -euo pipefail
 
 FORGE_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(pwd)"
@@ -408,7 +408,7 @@ mkdir -p .forge/stack-skills
 mkdir -p .forge/skills        && cp "$FORGE_REPO/skills/forge-"*.md .forge/skills/
 mkdir -p .forge/skills/_shared && cp "$FORGE_REPO/skills/_shared/"*.md .forge/skills/_shared/
 # Ensure all .forge files are readable (fixes Gemini CLI and other tools)
-chmod -R u+r,go+r .forge/
+chmod -R u+rwX,go-rwx .forge/
 echo "✅ .forge/ creado"
 echo ""
 
@@ -470,7 +470,15 @@ if [ -n "$extra" ]; then
         echo "Ya estaba detectada ✅"
       else
         # Check if installed
-        if detect_"$extra" 2>/dev/null; then
+        local _detected=false
+        case "$extra" in
+          claude)   detect_claude   2>/dev/null && _detected=true ;;
+          cursor)   detect_cursor   2>/dev/null && _detected=true ;;
+          copilot)  detect_copilot  2>/dev/null && _detected=true ;;
+          windsurf) detect_windsurf 2>/dev/null && _detected=true ;;
+          gemini)   detect_gemini   2>/dev/null && _detected=true ;;
+        esac
+        if $_detected; then
           DETECTED+=("$extra")
           echo "  Agregada: $extra"
         else

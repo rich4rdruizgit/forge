@@ -94,13 +94,16 @@ format_loc() {
 _KV_KEYS=""
 _KV_VALS=""
 
+KV_STORE_FILE=$(mktemp /tmp/_forge_kv_store.XXXXXX)
+
 kv_set() {
     local store="$1" key="$2" val="$3"
     local tag="${store}::${key}"
     # Check if key exists — update in place via temp file
-    local tmpf="/tmp/_forge_kv_$$"
+    local tmpf
+    tmpf=$(mktemp /tmp/_forge_kv.XXXXXX)
     local found=false
-    if [[ -f "/tmp/_forge_kv_store_$$" ]]; then
+    if [[ -f "$KV_STORE_FILE" ]]; then
         while IFS=$'\t' read -r k v; do
             if [[ "$k" == "$tag" ]]; then
                 printf '%s\t%s\n' "$tag" "$val"
@@ -108,41 +111,41 @@ kv_set() {
             else
                 printf '%s\t%s\n' "$k" "$v"
             fi
-        done < "/tmp/_forge_kv_store_$$" > "$tmpf"
-        mv "$tmpf" "/tmp/_forge_kv_store_$$"
+        done < "$KV_STORE_FILE" > "$tmpf"
+        mv "$tmpf" "$KV_STORE_FILE"
     fi
     if ! $found; then
-        printf '%s\t%s\n' "$tag" "$val" >> "/tmp/_forge_kv_store_$$"
+        printf '%s\t%s\n' "$tag" "$val" >> "$KV_STORE_FILE"
     fi
 }
 
 kv_get() {
     local store="$1" key="$2"
     local tag="${store}::${key}"
-    if [[ -f "/tmp/_forge_kv_store_$$" ]]; then
+    if [[ -f "$KV_STORE_FILE" ]]; then
         while IFS=$'\t' read -r k v; do
             if [[ "$k" == "$tag" ]]; then
                 printf '%s' "$v"
                 return
             fi
-        done < "/tmp/_forge_kv_store_$$"
+        done < "$KV_STORE_FILE"
     fi
 }
 
 kv_keys() {
     local store="$1"
     local prefix="${store}::"
-    if [[ -f "/tmp/_forge_kv_store_$$" ]]; then
+    if [[ -f "$KV_STORE_FILE" ]]; then
         while IFS=$'\t' read -r k v; do
             case "$k" in
                 ${prefix}*) printf '%s\n' "${k#${prefix}}" ;;
             esac
-        done < "/tmp/_forge_kv_store_$$"
+        done < "$KV_STORE_FILE"
     fi
 }
 
 kv_cleanup() {
-    rm -f "/tmp/_forge_kv_store_$$"
+    rm -f "$KV_STORE_FILE"
 }
 trap kv_cleanup EXIT
 
@@ -1495,8 +1498,10 @@ update_config() {
 
     # proyecto.nombre
     if [[ -n "$PROJECT_NAME" ]]; then
-        sed -i.bak "s|nombre: \"Mi Proyecto\"|nombre: \"$PROJECT_NAME\"|" "$config_file" || true
-        sed -i.bak "s|nombre: \".*\"|nombre: \"$PROJECT_NAME\"|" "$config_file" || true
+        local PROJECT_NAME_SAFE
+        PROJECT_NAME_SAFE=$(printf '%s' "$PROJECT_NAME" | sed 's/[|&\\/]/\\&/g')
+        sed -i.bak "s|nombre: \"Mi Proyecto\"|nombre: \"$PROJECT_NAME_SAFE\"|" "$config_file" || true
+        sed -i.bak "s|nombre: \".*\"|nombre: \"$PROJECT_NAME_SAFE\"|" "$config_file" || true
     fi
 
     # proyecto.descripcion — auto-generate from detected data
@@ -1513,16 +1518,22 @@ update_config() {
     [[ $TOTAL_XML -gt 0 && $TOTAL_COMPOSABLES -eq 0 ]] && desc_parts="$desc_parts + XML"
     $HAS_COROUTINES && desc_parts="$desc_parts + Coroutines" || true
     $HAS_RXJAVA && desc_parts="$desc_parts + RxJava" || true
-    sed -i.bak "s|descripcion: \"Descripción breve del proyecto\"|descripcion: \"$desc_parts\"|" "$config_file" || true
+    local desc_parts_safe
+    desc_parts_safe=$(printf '%s' "$desc_parts" | sed 's/[|&\\/]/\\&/g')
+    sed -i.bak "s|descripcion: \"Descripción breve del proyecto\"|descripcion: \"$desc_parts_safe\"|" "$config_file" || true
 
     # stack.arquitectura
     if [[ -n "$DOMINANT_PATTERN" && "$DOMINANT_PATTERN" != "unknown" ]]; then
-        sed -i.bak "s|arquitectura:.*|arquitectura: clean+$DOMINANT_PATTERN|" "$config_file" || true
+        local DOMINANT_PATTERN_SAFE
+        DOMINANT_PATTERN_SAFE=$(printf '%s' "$DOMINANT_PATTERN" | sed 's/[|&\\/]/\\&/g')
+        sed -i.bak "s|arquitectura:.*|arquitectura: clean+$DOMINANT_PATTERN_SAFE|" "$config_file" || true
     fi
 
     # stack.di
     if [[ -n "$DI_FRAMEWORK" ]]; then
-        sed -i.bak "s|di:.*#\?.*|di: $DI_FRAMEWORK|" "$config_file" || true
+        local DI_FRAMEWORK_SAFE
+        DI_FRAMEWORK_SAFE=$(printf '%s' "$DI_FRAMEWORK" | sed 's/[|&\\/]/\\&/g')
+        sed -i.bak "s|di:.*#\?.*|di: $DI_FRAMEWORK_SAFE|" "$config_file" || true
     fi
 
     # stack.async
