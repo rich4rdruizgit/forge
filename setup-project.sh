@@ -379,10 +379,13 @@ setup_stack() {
       read -r custom_stack
       # sanitize: lowercase, no spaces
       STACK_NAME=$(echo "$custom_stack" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+      if [[ ! "$STACK_NAME" =~ ^[a-z0-9][a-z0-9-]{0,39}$ ]]; then
+          echo "Error: nombre de stack inválido. Solo letras minúsculas, números y guiones." >&2
+          exit 1
+      fi
       cp "$FORGE_REPO/stacks/TEMPLATE.md" "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md"
       # Replace {nombre} placeholder in the template
-      sed -i.bak "s/{nombre}/$STACK_NAME/g" "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md"
-      rm -f "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md.bak"
+      awk -v val="$STACK_NAME" '{ gsub(/\{nombre\}/, val) } { print }' "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md" > "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md.tmp" && mv "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md.tmp" "$PROJECT_ROOT/.forge/stack-skills/$STACK_NAME.md"
       echo "✅ Plantilla generada: .forge/stack-skills/$STACK_NAME.md"
       echo "   ⚠️  Completá todas las secciones antes de usar forge spec/build."
       ;;
@@ -416,8 +419,7 @@ echo ""
 setup_stack
 
 # Update stack in config.yaml
-sed -i.bak "s/plataforma: android/plataforma: $STACK_NAME/g" "$PROJECT_ROOT/.forge/config.yaml"
-rm -f "$PROJECT_ROOT/.forge/config.yaml.bak"
+awk -v val="$STACK_NAME" '/plataforma: android/ { sub(/plataforma: android/, "plataforma: " val) } { print }' "$PROJECT_ROOT/.forge/config.yaml" > "$PROJECT_ROOT/.forge/config.yaml.tmp" && mv "$PROJECT_ROOT/.forge/config.yaml.tmp" "$PROJECT_ROOT/.forge/config.yaml"
 echo ""
 
 # 2. Detect installed tools

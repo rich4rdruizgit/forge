@@ -1090,6 +1090,12 @@ load_existing_dna() {
 "
         fi
     done < "$DNA_FILE"
+    local tk_size
+    tk_size=$(printf '%s' "$tribal" | wc -c)
+    if [[ $tk_size -gt 5000 ]]; then
+        tribal=""
+    fi
+    tribal=$(printf '%s' "$tribal" | tr -d '\r' | grep -v '^\s*system:\|^\s*instructions:\|^\s*SYSTEM:\|^\s*INSTRUCTIONS:')
     EXISTING_TRIBAL_KNOWLEDGE="$tribal"
 }
 
@@ -1176,7 +1182,11 @@ generate_yaml() {
         if [[ -n "$BUILD_FLAVORS" ]]; then
             printf '\nbuild_flavors:\n'
             while IFS= read -r flavor; do
-                [[ -n "$flavor" ]] && printf '  - %s\n' "$flavor" || true
+                [[ -z "$flavor" ]] && continue
+                if [[ ! "$flavor" =~ ^[a-zA-Z][a-zA-Z0-9_]{0,49}$ ]]; then
+                    continue
+                fi
+                printf '  - %s\n' "$(yaml_escape "$flavor")"
             done <<< "$BUILD_FLAVORS"
         fi
 
