@@ -67,10 +67,12 @@ c. Match query against these fields (case-insensitive):
 
 **If NOT available (fallback to file):**
 If `.forge/KNOWLEDGE.md` exists and is non-empty:
-- Search KNOWLEDGE.md for matches against the query in these sections:
-  - **Patrones Establecidos**, **Contratos Conocidos**, **Componentes Reutilizables**
-  - **Errores y Lecciones**, **Decisiones Técnicas Globales**
-- Store matching entries tagged with source `KNOWLEDGE.md`
+- KNOWLEDGE.md es un índice delgado — contiene referencias, NO contenido completo
+- Buscar matches contra la query en todas las tablas del índice:
+  **Active Patterns**, **Recent Decisions**, **Contracts & Components**, **Recent Errors & Lessons**, **Module Hotspots**
+- Para cada match: presentar nombre + feature + forge-memory key
+- Aclarar en el output: "Resultado de índice (forge-memory no disponible). Contenido completo recuperable cuando forge-memory vuelva."
+- Store matching entries tagged with source `KNOWLEDGE.md (index)`
 
 If `.forge/KNOWLEDGE.md` does not exist or is empty, skip silently.
 

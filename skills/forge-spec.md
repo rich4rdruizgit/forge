@@ -66,10 +66,12 @@ Knowledge retrieval is on-demand — no full-file loads into context.
 5. If no results: declare "forge-memory: sin patrones previos — primera feature sin contexto."
 
 **If NOT available (fallback to file):**
-1. Read `KNOWLEDGE.md` from project root
-2. Find: applicable patterns, contracts, reusable components, modules touched
-3. **Present findings to dev** — this is a GATE, not informational
-4. If KNOWLEDGE.md is empty → declare: "KNOWLEDGE.md está vacío — no hay patrones previos."
+1. Read `.forge/KNOWLEDGE.md` — es un índice delgado (máx 80 líneas), NO contenido completo
+2. Buscar en tablas: **Active Patterns**, **Recent Decisions**, **Contracts & Components**, **Module Hotspots**
+3. Para cada match relevante al contexto de esta feature: presentar nombre + feature de origen + forge-memory key
+4. Aclarar al dev: "Modo fallback activo (forge-memory no disponible). Referencia de índice — contenido completo recuperable con `forge ref <key>` cuando forge-memory vuelva."
+5. **Present findings to dev** — this is a GATE, not informational
+6. If KNOWLEDGE.md is empty → declare: "KNOWLEDGE.md vacío — no hay patrones previos."
 
 Read `profundidad` from FORGE.md (set by `forge new`).
 
