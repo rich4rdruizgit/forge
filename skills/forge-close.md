@@ -2,7 +2,8 @@
 name: forge-close
 description: >
   Archive a completed Forge feature cycle. Validates all required phases are approved (SPIKE optional, SPEC/BUILD/VERIFY required),
-  generates INDEX.md as-built reference, extracts knowledge for KNOWLEDGE.md with dev approval, moves artifacts to closed/,
+  generates INDEX.md as-built reference, extracts knowledge — writes full content to forge-memory (canonical) and one-liner
+  index entries to KNOWLEDGE.md (thin index, max 80 lines) — moves artifacts to closed/,
   updates FORGE.md history, and resets active cycle state.
   Trigger: `forge close` command with all required phases approved.
 license: Apache-2.0
@@ -70,49 +71,64 @@ Populate these sections:
 
 ### Step C2.5 — Knowledge Extraction
 
-After generating INDEX.md and BEFORE archiving, extract knowledge for KNOWLEDGE.md.
+After generating INDEX.md and BEFORE archiving, extract and persist knowledge.
+
+**IMPORTANTE**: El orden es K1 → K2 → K3 → K5 → K4.
+forge-memory es la fuente canónica. KNOWLEDGE.md es el índice delgado.
 
 #### Step K1 — Read artifacts
 Read: approved SPEC, VERIFY report, TRACEABILITY.md, INDEX.md
 
 #### Step K2 — Extract candidates
-For each KNOWLEDGE.md section, identify candidates:
-- **Patrones Establecidos**: ¿Se usó un patrón no registrado?
-- **Decisiones Técnicas Globales**: ¿Alguna decisión afecta más que esta feature?
-- **Contratos Conocidos**: ¿Nuevo endpoint, componente, o interfaz?
-- **Componentes Reutilizables**: ¿Se creó algo diseñado para reuso? (check SPEC section 5b)
+For each knowledge category, identify candidates:
+- **Patrones**: ¿Se usó o estableció un patrón reutilizable?
+- **Decisiones Técnicas**: ¿Alguna decisión afecta más que esta feature?
+- **Contratos / Componentes**: ¿Nuevo endpoint, interfaz, o componente reutilizable?
 - **Errores y Lecciones**: ¿Algo inesperado que un dev futuro debería saber?
-- **Módulos Tocados**: SIEMPRE actualizar
+- **Módulos Tocados**: SIEMPRE registrar
 
 #### Step K3 — Present to dev
 Present each candidate with concrete format. The dev approves, edits, or rejects EACH ONE individually.
+**Rule**: NUNCA persistir una entrada sin aprobación explícita del dev por entrada.
 
-#### Step K4 — Write approved entries
-ONLY write entries approved by the dev. Add to the corresponding section of KNOWLEDGE.md.
-Update "Última actualización" header.
+#### Step K5 — Write full content to forge-memory (CANONICAL STORE)
 
-**Rule**: NEVER write to KNOWLEDGE.md without explicit dev approval per entry.
+**Este paso va ANTES de K4.** forge-memory recibe el contenido completo.
 
-#### Step K5 — Index in forge-memory
+**If `forge_memory_available`:**
 
-After K4 writes approved entries to KNOWLEDGE.md, if `forge_memory_available`:
+1. Por cada entrada aprobada en K3, call `forge_mem_save`:
+   ```
+   title: "{entry title}"
+   type: "knowledge"
+   topic_key: "knowledge/{category}/{slug-del-entry}"
+     — donde category es: pattern | decision | contract | component | error
+     — ejemplos: "knowledge/pattern/base-viewmodel"
+                 "knowledge/decision/DT-005"
+                 "knowledge/error/ERR-002"
+   content:
+     **Feature**: {slug}
+     **Date**: {today}
+     **Category**: {category}
+     {contenido completo aprobado en K3 — sin truncar}
+   ```
+   Guardar el `topic_key` retornado por cada llamada para usarlo en K4.
 
-1. Call `forge_mem_knowledge_extract` with:
+2. Call `forge_mem_knowledge_extract` con:
    ```
    feature: {slug}
-   entries: {approved entries from K4}
+   entries: {approved entries from K3}
    ```
-   → This indexes the knowledge semantically. Future `forge new` and `forge spec` will query this instead of loading the full KNOWLEDGE.md file.
 
-2. Call `forge_mem_session_summary` with:
+3. Call `forge_mem_session_summary` con:
    ```
    goal: "Feature cerrada: {title}"
    accomplished:
      - {N} ACs implementados
      - Quality Score SPEC: {X}/10
-     - Patterns applied: {list from K4}
+     - Patterns applied: {list from K3}
    discoveries:
-     - {entries from "Errores y Lecciones" approved in K4}
+     - {entries from "Errores y Lecciones" approved in K3}
    next_steps: []
    relevant_files:
      - .forge/features/closed/{slug}/SPEC.md
@@ -120,9 +136,41 @@ After K4 writes approved entries to KNOWLEDGE.md, if `forge_memory_available`:
      - .forge/features/closed/{slug}/VERIFY.md
    ```
 
-3. Call `forge_mem_session_end(project: {slug})`
+4. Call `forge_mem_session_end(project: {slug})`
 
-If forge-memory is NOT available → skip K5 silently. KNOWLEDGE.md is the sole store in that case.
+**If forge-memory NOT available:** skip K5 silently, continuar con K4. En este caso KNOWLEDGE.md recibirá el contenido completo como fallback de último recurso (ver regla K4-fallback más abajo).
+
+#### Step K4 — Update KNOWLEDGE.md index (THIN INDEX)
+
+KNOWLEDGE.md es un índice delgado de máx 80 líneas. NO almacena contenido completo.
+
+**Límite duro**: Antes de escribir, contar las líneas del archivo. Si agregar las nuevas entradas supera las 80 líneas, eliminar las filas más antiguas de cada tabla (mantener las últimas N) hasta caber dentro del límite.
+
+**Si forge-memory estuvo disponible en K5** — escribir ONE-LINER por entrada aprobada:
+
+- **Module Hotspots**: agregar fila `| {module} | {slug} | {date} | {1-line note} |`
+  Mantener últimas 10 filas. Eliminar las más antiguas si se supera.
+
+- **Recent Decisions**: agregar fila `| {DT-N} | {1-line title} | {slug} | {topic_key de K5} |`
+  Mantener últimas 5 filas.
+
+- **Active Patterns**: agregar fila `| {pattern name} | {slug} | {topic_key de K5} |`
+  Sin límite de filas fijo, pero respetar el límite global de 80 líneas.
+
+- **Contracts & Components**: agregar fila `| {name} | {type} | {module} | {topic_key de K5} |`
+
+- **Recent Errors & Lessons**: agregar fila `| {ERR-N} | {1-line title} | {slug} | {topic_key de K5} |`
+  Mantener últimas 3 filas.
+
+Actualizar **Stats** y **Last updated** en el encabezado.
+
+**K4-fallback (forge-memory NO disponible en K5)**: Escribir contenido completo de cada entrada aprobada directamente en KNOWLEDGE.md (comportamiento legacy). Advertir al dev:
+```
+⚠️ forge-memory no disponible — contenido completo guardado en KNOWLEDGE.md.
+   Activá forge-memory para evitar que este archivo crezca sin control.
+```
+
+**Rule**: NUNCA escribir a KNOWLEDGE.md sin aprobación explícita del dev (viene de K3).
 
 ### Step C3 — Create closed folder if needed
 Check if `.forge/features/closed/` exists. If not: create it. Not an error.

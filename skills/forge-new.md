@@ -99,14 +99,15 @@ Knowledge retrieval is on-demand and context-safe — no full-file loads.
 
 **If NOT available (fallback to file):**
 If `.forge/KNOWLEDGE.md` exists and has content:
-1. Search for similar past features in "Modulos Tocados" and "Componentes Reutilizables"
-2. Find applicable patterns in "Patrones Establecidos" and "Decisiones Tecnicas Globales"
-3. Find relevant contracts in "Contratos Conocidos"
-4. Find related errors/lessons in "Errores y Lecciones"
+1. Read ONLY the index tables (el archivo es un índice delgado, no contenido completo)
+2. Buscar coincidencias en: **Module Hotspots**, **Active Patterns**, **Recent Decisions**, **Contracts & Components**
+3. Para cada match relevante, presentar: nombre + feature de origen + forge-memory key (si existe)
+4. **Aclarar al dev**: "Estoy en modo fallback (forge-memory no disponible). Las entradas son referencias — el contenido completo se recupera con `forge ref <forge-memory key>` cuando forge-memory vuelva a estar disponible."
 5. Present findings to the dev with specific references
+
 If KNOWLEDGE.md is empty or missing:
 ```
-KNOWLEDGE.md vacio — primera feature sin contexto previo.
+KNOWLEDGE.md vacío — primera feature sin contexto previo.
 ```
 
 ---
