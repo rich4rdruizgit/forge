@@ -1,5 +1,5 @@
 # FORGE — Project Status
-> Generated: 2026-03-26
+> Generated: 2026-04-05 (audit pass)
 
 ---
 
@@ -42,10 +42,10 @@ FORGE/
 │
 ├── skills/                     ← 14 agent skills + 1 shared runtime
 │   ├── forge-orchestrator.md   ← NEW v0.7 (orchestrator coordination)
-│   ├── forge-new.md            ← MODIFIED v0.4
+│   ├── forge-new.md            ← MODIFIED v0.7
 │   ├── forge-spike.md
-│   ├── forge-spec.md           ← MODIFIED v0.4
-│   ├── forge-build.md          ← MODIFIED v0.4 (full protocol reference)
+│   ├── forge-spec.md           ← MODIFIED v0.7
+│   ├── forge-build.md          ← MODIFIED v0.7 (full protocol reference)
 │   ├── forge-build-red.md      ← NEW v0.7 (RED sub-agent)
 │   ├── forge-build-green.md    ← NEW v0.7 (GREEN sub-agent)
 │   ├── forge-verify.md         ← MODIFIED v0.7 (return contract)
@@ -53,8 +53,8 @@ FORGE/
 │   ├── forge-validate.md
 │   ├── forge-trace.md          ← MODIFIED v0.7 (return contract)
 │   ├── forge-ref.md
-│   ├── forge-status.md         ← MODIFIED v0.4
-│   ├── forge-close.md          ← MODIFIED v0.4
+│   ├── forge-status.md         ← MODIFIED v0.7
+│   ├── forge-close.md          ← MODIFIED v0.7
 │   └── _shared/
 │       └── forge-runtime.md    ← MODIFIED v0.7 (sub-agent mode)
 │
@@ -65,13 +65,13 @@ FORGE/
 │   ├── TRACEABILITY.md
 │   ├── VALIDATION.md
 │   ├── INDEX.md
-│   └── KNOWLEDGE.md            ← NEW v0.4 (progressive team memory)
+│   └── KNOWLEDGE.md            ← NEW v0.4 (thin index — canonical store is forge-memory)
 │
 ├── validation/                 ← 5 assertion YAML files (reorganized by pillars)
 │   ├── assertions-spike.yaml
-│   ├── assertions-spec.yaml    ← MODIFIED v0.4
-│   ├── assertions-build.yaml   ← MODIFIED v0.4
-│   ├── assertions-verify.yaml  ← MODIFIED v0.4
+│   ├── assertions-spec.yaml    ← MODIFIED v0.7
+│   ├── assertions-build.yaml   ← MODIFIED v0.7
+│   ├── assertions-verify.yaml  ← MODIFIED v0.7
 │   └── assertions-cross.yaml
 │
 └── stacks/
@@ -97,7 +97,7 @@ FORGE/
 | `forge trace` | forge-trace | Generate traceability matrix | — |
 | `forge ref <query>` | forge-ref | Query closed features as reference | — |
 | `forge status` | forge-status | Cycle state report | Shows Quality Score and pillar breakdown |
-| `forge close` | forge-close | Archive completed feature | Updates KNOWLEDGE.md with learnings |
+| `forge close` | forge-close | Archive completed feature | Extracts knowledge to forge-memory (canonical), updates KNOWLEDGE.md index |
 
 ---
 
@@ -142,12 +142,12 @@ Tests written during RED are locked for the duration of GREEN:
 - Violations are flagged by `forge verify` assertions (P4)
 - Refactor phase may update tests only if ACs change and with explicit justification
 
-### 6. KNOWLEDGE.md — Progressive Team Memory
-A new template and workflow for accumulating team knowledge across features:
-- Updated automatically by `forge close` with learnings from the completed cycle
+### 6. KNOWLEDGE.md — Thin Index (forge-memory is canonical since v0.5)
+A template and workflow for accumulating team knowledge across features:
+- `forge close` extracts knowledge to **forge-memory** (canonical semantic store) — KNOWLEDGE.md receives one-liner index entries only (max 80 lines)
 - Versioned in git — shared across the team, not personal/agent memory
-- Consulted by `forge new` to inform depth selection and surface relevant patterns
-- Starts empty with no penalty; grows more valuable with each closed feature
+- Consulted by `forge new` / `forge ref` as fallback when forge-memory MCP is unavailable
+- Starts empty with no penalty; full knowledge lives in forge-memory; index grows with each closed feature
 
 ### 7. forge new — Expanded Behavior
 `forge new` now does more than scaffold:

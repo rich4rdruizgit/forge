@@ -36,7 +36,7 @@ Before executing anything, verify ALL of these:
 
 ## Forge Runtime
 
--> Execute `_shared/forge-runtime.md` steps R0-R4 before any skill-specific logic.
+-> Execute `_shared/forge-runtime.md` steps R0-R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -136,7 +136,7 @@ Show exactly this format:
 <fire> Feature: [title]
 <clipboard> HU: [1-line summary of description]
 <chart> Profundidad: [LIGERA/MEDIA/PROFUNDA] — [1-line justification from axes]
-<brain> KNOWLEDGE.md: [N relevant entries found / "vacio"]
+<brain> forge-memory / KNOWLEDGE.md: [N relevant entries found / "vacio"]
 <target> Puntos: [X] — [OK / REQUIERE FRAGMENTACION]
 <checkmark> ACs: [OK / A refinar / Pendientes]
 

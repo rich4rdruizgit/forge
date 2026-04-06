@@ -26,7 +26,7 @@ This is the **RED phase** extracted from `forge-build` for sub-agent execution. 
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -69,9 +69,9 @@ If SPEC.md is not found:
 ## Step B3 — Determine continuation point
 
 Read `.forge/features/activo/{slug}/TRACEABILITY.md` if it exists:
-- Find the last AC with status `✅ Refactored`
+- Find the last AC with status `🔴 Red` — that's where RED left off
 - The next AC in Test Sequencing order is the continuation point
-- If TRACEABILITY.md does not exist or has no entries: start from the first AC in Test Sequencing
+- If TRACEABILITY.md does not exist or has no `🔴 Red` entries: start from the first AC in Test Sequencing
 
 Output:
 ```
@@ -361,10 +361,10 @@ Violación de esta regla = BUILD inválido. El AC debe rehacerse desde RED.
 
 | Condition | Response |
 |-----------|----------|
-| SPEC not `✅ Aprobado` | Block. E200. |
+| SPEC not `✅ Aprobado` | Block. E204. |
 | BUILD already `✅ Aprobado` | Block. E201. Suggest `forge verify`. |
 | No active feature | Block. E202. Suggest `forge new`. |
 | Stack skill file not found | Block. E203. Output error with instructions to create it. |
-| SPEC.md not found | Block. E200 variant. |
+| SPEC.md not found | Block. E200. |
 | Test does not fail in RED phase | STOP. The test is invalid — it must fail without implementation. Fix the test. |
 | Auto-gate fails | Block. List missing criteria. Fix tests before proceeding to GREEN. |

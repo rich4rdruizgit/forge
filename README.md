@@ -56,7 +56,7 @@ Each phase is **immutable once approved** — no silent rewrites, no going back.
 | `forge trace` | Generate traceability matrix: AC → Event → Test → Implementation → UI State |
 | `forge ref <query>` | Query closed features as reference |
 | `forge status` | Show current cycle state |
-| `forge close` | Archive feature, extract knowledge to KNOWLEDGE.md |
+| `forge close` | Archive feature, extract knowledge to forge-memory, update KNOWLEDGE.md index |
 
 ---
 

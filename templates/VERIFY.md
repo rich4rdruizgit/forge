@@ -2,7 +2,7 @@
 > **Forge Cycle** | Fase de verificación
 > **Estado:** ✅ Verificado | ❌ Gaps encontrados
 > **Feature:** {{FEATURE_NAME}}
-> **SPEC:** `forge/features/activo/{{slug}}/SPEC.md` ✅
+> **SPEC:** `.forge/features/activo/{{slug}}/SPEC.md` ✅
 > **BUILD:** ✅ Aprobado
 > **Fecha:** {{DATE}}
 
@@ -12,7 +12,7 @@
 
 | AC | SPEC (§1) | Test | Implementación | Status |
 |----|-----------|------|---------------|--------|
-| AC-1: {{título}} | ✅ | {{test_ids}} | {{impl_files}} | ✅ Completo |
+| AC-1: {{título}} | ✅ | {{test_ids}} | {{impl_files}} | ✅ Covered |
 
 **Cobertura:** {{N}}/{{N}} ACs ({{100}}%)
 
@@ -22,7 +22,7 @@
 
 | Evento | SPEC (§2) | Test | Emitido por | Status |
 |--------|-----------|------|-----------|--------|
-| {{EventName}} | ✅ | {{test_id}} | {{ClassName.method}} | ✅ Completo |
+| {{EventName}} | ✅ | {{test_id}} | {{ClassName.method}} | ✅ Covered |
 
 **Cobertura:** {{N}}/{{N}} eventos ({{100}}%)
 

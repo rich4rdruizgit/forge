@@ -224,9 +224,18 @@ When a BUILD-GREEN sub-agent returns `status: needs_input`:
    
    Cual elegis? (o propone una alternativa)
    ```
-3. Wait for dev response
-4. Add the decision to pending_addenda
-5. Re-launch BUILD-GREEN with the addendum included
+3. **Persist pending decisions BEFORE waiting for dev response** — write to `.forge/features/activo/{slug}/TRACEABILITY.md` under a `## Pending Decisions` section:
+   ```markdown
+   ## Pending Decisions
+   | AC | Description | Options | Status |
+   |----|-------------|---------|--------|
+   | {ac} | {description} | {options joined with " / "} | ⏳ Pendiente |
+   ```
+   This ensures that if the session is compacted or restarted, the orchestrator can recover pending state by reading TRACEABILITY.md.
+4. Wait for dev response
+5. Add the decision to `pending_addenda` in orchestrator state
+6. Update the corresponding row in TRACEABILITY.md `## Pending Decisions` to `✅ Resuelto: {dev decision}`
+7. Re-launch BUILD-GREEN with the addendum included
 
 ---
 
@@ -234,12 +243,13 @@ When a BUILD-GREEN sub-agent returns `status: needs_input`:
 
 ### After session end or compaction:
 1. Read FORGE.md → get fase_actual
-2. Read TRACEABILITY.md → get last completed AC
+2. Read TRACEABILITY.md → get last completed AC and any `## Pending Decisions` rows with status `⏳ Pendiente`
 3. Query forge-memory for orchestrator state (if available)
-4. Resume from determined point
+4. If pending decisions found in TRACEABILITY.md → restore `pending_addenda` from those rows before resuming
+5. Resume from determined point
 
 ### State persistence:
-- TRACEABILITY.md is the BUILD checkpoint (already exists)
+- TRACEABILITY.md is the BUILD checkpoint (already exists) — also stores pending decisions (see Addenda Handling)
 - FORGE.md is the phase checkpoint (already exists)
 - forge-memory stores orchestrator-specific state (pending addenda, batch progress)
 

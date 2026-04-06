@@ -25,7 +25,7 @@ The 5 Pillars:
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -138,7 +138,7 @@ Para cada AC:
 
 **MEDIA + PROFUNDA only.** Skip for LIGERA (document skip reason).
 
-1. Check KNOWLEDGE.md patterns against proposed approach
+1. Check forge-memory patterns against proposed approach (fallback: KNOWLEDGE.md thin index)
    - If dev wants to deviate → must document reason in Decisiones Técnicas (section 10)
 2. Check existing code to reuse
    - Section 5a (Componentes a Reutilizar) CANNOT be empty without justification
@@ -146,6 +146,55 @@ Para cada AC:
    > "¿Este módulo ya tiene [X]? ¿Hay algo en core/common que podamos reutilizar?"
 
 Wait for dev response. Document findings in sections 5a and 5b.
+
+---
+
+## Step 5-PRE — Detect base package
+
+Before building §5b (Componentes Nuevos), detect the project's base package so that
+all proposed file paths use the correct namespace. Run this step silently — no output
+to the dev unless detection fails or requires input.
+
+### Android / KMP (when `stack` is `android` or `kmp`)
+
+Execute in order — stop at the first successful result:
+
+1. Find `app/build.gradle.kts` or `app/build.gradle`.
+   Extract `applicationId` (preferred) or `namespace` from the `android { }` block.
+2. If not found: find `app/src/main/AndroidManifest.xml`.
+   Extract the `package` attribute from the `<manifest>` tag.
+3. If not found: find any `.kt` file under `app/src/main/java/`.
+   Extract the first `package com.xxx` declaration.
+
+Set `base_package = {extracted value}`.
+
+If none of the three steps yielded a result:
+- Set `base_package = null`
+- Emit **E105** (warning, not blocker):
+  > ⚠️ E105: No se pudo detectar el package base del proyecto automáticamente.
+  > Revisá los paths propuestos en §5b — contienen el placeholder `{base_package}`
+  > que debés reemplazar con el namespace real (ej. `com.example.miapp`).
+  > Fuentes consultadas: `app/build.gradle.kts`, `app/build.gradle`,
+  > `app/src/main/AndroidManifest.xml`, y archivos `.kt` en `app/src/main/java/`.
+
+### Otros stacks
+
+- `package.json` existe → usar el campo `name` como referencia de contexto
+  (no es un package de código directamente, pero informa el nombre del proyecto)
+- `go.mod` existe → extraer `module {name}` como `base_package`
+- Archivos `.py` → no hay package formal; usar el directorio raíz como referencia
+- Si nada encontrado → preguntar al dev:
+  > "¿Cuál es el package/namespace base del proyecto?"
+  > Esperá respuesta antes de continuar con §5b.
+
+### Uso en §5b
+
+Cuando el agente proponga paths de archivos nuevos en §5b:
+- Si `base_package` fue detectado → usar como prefijo del package en todos los paths.
+  Ejemplo: `com.example.testforge.counter.presentation.CounterFragment`
+- Si `base_package` es null y el dev no respondió → usar el placeholder `{base_package}`
+  en los paths de forma explícita para que sea evidente que falta completar.
+  Ejemplo: `{base_package}.counter.presentation.CounterFragment`
 
 ---
 
@@ -162,7 +211,7 @@ Fill sections according to `profundidad`:
 | 1 | User Story (verbatim del ticket) | ✅ | ✅ | ✅ |
 | 2 | Profundidad y Justificación | ✅ | ✅ | ✅ |
 | 3 | Criterios de Aceptación (GWT) | ✅ | ✅ | ✅ |
-| 4 | Casos Borde (mín 2) | ✅ | ✅ | ✅ |
+| 4 | Casos Borde (mín per config: LIGERA=0, MEDIA=1, PROFUNDA=2) | ✅ | ✅ | ✅ |
 | 5a | Componentes a Reutilizar | ✅ | ✅ | ✅ |
 | 5b | Componentes Nuevos | ✅ | ✅ | ✅ |
 | 6 | Definition of Done | ✅ | ✅ | ✅ |
@@ -248,7 +297,7 @@ Total: X/10. Minimum threshold: **7/10** (configurable via `spec_score_minimo` i
 
 | Score | Criterio |
 |-------|----------|
-| 2 | Patrones de KNOWLEDGE.md referenciados y seguidos (o desviación justificada). **Si KNOWLEDGE.md vacío → 2/2 automático** |
+| 2 | Patrones de forge-memory (o KNOWLEDGE.md en fallback) referenciados y seguidos (o desviación justificada). **Si no hay patrones previos → 2/2 automático** |
 | 1 | Ignora patrones existentes sin justificación |
 | 0 | Contradice patrones establecidos |
 
@@ -318,7 +367,7 @@ After generating SPEC.md:
 
 1. **NEVER** invent ACs — ask the dev, always
 2. **NEVER** invent technical decisions — present options, dev decides
-3. **NEVER** ignore established patterns from KNOWLEDGE.md
+3. **NEVER** ignore established patterns from forge-memory (or KNOWLEDGE.md in fallback)
 4. **NEVER** accept AC describing implementation (reject with explanation)
 5. **NEVER** continue with vague AC — reject and explain what's vague
 6. **NEVER** generate complete SPEC at once — build incrementally in conversation
@@ -326,7 +375,7 @@ After generating SPEC.md:
 8. **ALWAYS** verify integration: what exists to reuse (Step 4)
 9. **ALWAYS** ask challenge questions (min 1/3/5 by depth)
 10. **ALWAYS** compute Quality Score with the exact rubric above
-11. **ALWAYS** present context from KNOWLEDGE.md BEFORE any questions (Step 1 is a gate)
+11. **ALWAYS** present context from forge-memory (or KNOWLEDGE.md in fallback) BEFORE any questions (Step 1 is a gate)
 12. **ALWAYS** load stack skill before generating architecture sections
 13. **ALWAYS** one question at a time — wait for response before continuing
 14. **ALWAYS** format ACs as Dado/Cuando/Entonces (Given/When/Then if `lenguaje=en`)
@@ -344,6 +393,7 @@ After generating SPEC.md:
 | E102 | Stack skill file not found | Block. Instruct to create stack skill. |
 | E103 | SPEC.md not found on disk | Warn. Recreate from template and continue. |
 | E104 | Quality Score < 7 | Warn. List corrections by pillar. |
+| E105 | Base package not detected (Android/KMP only) | Warn. Emit placeholder `{base_package}` in §5b paths. Instruct dev to replace with real namespace. |
 
 ---
 

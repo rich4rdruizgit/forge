@@ -1,5 +1,5 @@
 # Cross-Phase Assertions
-# Forge v0.3 Validation System
+# Forge v0.7 Validation System
 
 phase: cross
 description: >
@@ -70,6 +70,6 @@ assertions:
     description: "VERIFY cubre todos los ACs de SPEC"
     severity: blocker
     verification: |
-      Cada AC de SPEC.md aparece en VERIFY.md con status Completo.
+      Cada AC de SPEC.md aparece en VERIFY.md con STATUS = "✅ Covered".
     evidence_hint: "ACs verificados"
     requires_phases: [SPEC, VERIFY]

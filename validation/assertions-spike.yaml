@@ -1,49 +1,72 @@
 # Assertions for SPIKE
-# Forge v0.3 Validation System
+# Forge v0.7 Validation System
+# Reorganized by the 5 Pillars (P1-P5)
+# ID format: P{pillar}-SPIKE-{NNN}
 
 phase: spike
-assertions:
-  - id: SPIKE_QUESTION
-    description: "Pregunta técnica específica definida"
-    severity: blocker
-    verification: |
-      Buscar sección 'Pregunta a resolver' con contenido real (no placeholder).
-      Debe ser UNA pregunta concreta, no un párrafo genérico.
-    evidence_hint: "Texto de la pregunta"
 
-  - id: SPIKE_OPTIONS
-    description: "Al menos 2 opciones evaluadas"
-    severity: blocker
-    verification: |
-      Contar subsecciones bajo 'Hallazgos' con tabla de evaluación
-      (Viabilidad + Esfuerzo). Count >= 2.
-      Excepción: si solo 1, debe haber justificación explícita.
-    evidence_hint: "Opciones con viabilidad"
+# ─────────────────────────────────────────────
+# P1 — Problema de Negocio
+# ¿La pregunta está definida y el impacto en SPEC declarado?
+# ─────────────────────────────────────────────
+pillars:
+  - pillar: P1
+    name: Problema de Negocio
+    assertions:
+      - id: P1-SPIKE-001
+        pillar: P1
+        description: "Pregunta técnica específica definida"
+        severity: blocker
+        verification: |
+          Buscar sección 'Pregunta a resolver' con contenido real (no placeholder).
+          Debe ser UNA pregunta concreta, no un párrafo genérico.
+        evidence_hint: "Texto de la pregunta"
 
-  - id: SPIKE_DECISION
-    description: "Decisión con razonamiento"
-    severity: blocker
-    verification: |
-      Sección 'Decisión' con 'Opción elegida' y 'Razonamiento' no vacíos.
-    evidence_hint: "Opción y razonamiento"
+      - id: P1-SPIKE-002
+        pillar: P1
+        description: "Time-box definido"
+        severity: warning
+        verification: |
+          Campo 'Time-box' en header con valor numérico.
+        evidence_hint: "Valor time-box"
 
-  - id: SPIKE_SPEC_IMPACT
-    description: "Impacto en SPEC declarado"
-    severity: blocker
-    verification: |
-      Campo 'Impacto en SPEC' con contenido real.
-    evidence_hint: "Texto del impacto"
+      - id: P1-SPIKE-003
+        pillar: P1
+        description: "Impacto en SPEC declarado"
+        severity: blocker
+        verification: |
+          Campo 'Impacto en SPEC' con contenido real.
+        evidence_hint: "Texto del impacto"
 
-  - id: SPIKE_TIMEBOX
-    description: "Time-box definido"
-    severity: warning
-    verification: |
-      Campo 'Time-box' en header con valor numérico.
-    evidence_hint: "Valor time-box"
+  # ─────────────────────────────────────────────
+  # P2 — Consistencia Arquitectónica
+  # ¿Se evaluaron alternativas y se tomó una decisión justificada?
+  # ─────────────────────────────────────────────
+  - pillar: P2
+    name: Consistencia Arquitectónica
+    assertions:
+      - id: P2-SPIKE-001
+        pillar: P2
+        description: "Al menos 2 opciones evaluadas"
+        severity: blocker
+        verification: |
+          Contar subsecciones bajo 'Hallazgos' con tabla de evaluación
+          (Viabilidad + Esfuerzo). Count >= 2.
+          Excepción: si solo 1, debe haber justificación explícita.
+        evidence_hint: "Opciones con viabilidad"
 
-  - id: SPIKE_RISKS
-    description: "Riesgos residuales documentados"
-    severity: warning
-    verification: |
-      Tabla Riesgos residuales con >= 1 fila o declaración de ausencia.
-    evidence_hint: "Primer riesgo"
+      - id: P2-SPIKE-002
+        pillar: P2
+        description: "Decisión con razonamiento"
+        severity: blocker
+        verification: |
+          Sección 'Decisión' con 'Opción elegida' y 'Razonamiento' no vacíos.
+        evidence_hint: "Opción y razonamiento"
+
+      - id: P2-SPIKE-003
+        pillar: P2
+        description: "Riesgos residuales documentados"
+        severity: warning
+        verification: |
+          Tabla Riesgos residuales con >= 1 fila o declaración de ausencia.
+        evidence_hint: "Primer riesgo"

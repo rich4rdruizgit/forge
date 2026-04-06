@@ -31,7 +31,7 @@ This skill is designed to run with fresh context. The orchestrator provides AC b
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -85,10 +85,16 @@ If SPEC.md is not found:
 
 ## Step B3 — Determine continuation point
 
-Read `.forge/features/activo/{slug}/TRACEABILITY.md` if it exists:
-- Find the last AC with status `✅ Refactored`
-- The next AC in Test Sequencing order is the continuation point
-- If TRACEABILITY.md does not exist or has no entries: start from the first AC in Test Sequencing
+**If an `input_contract` was provided by the orchestrator** (standard execution):
+- Use the `ac_batch` from the input contract directly as the list of ACs to implement.
+- Do NOT read TRACEABILITY.md to derive the batch — the orchestrator already determined it.
+
+**If no `input_contract` is present** (standalone execution — fallback):
+- Read `.forge/features/activo/{slug}/TRACEABILITY.md` if it exists.
+- Find the last AC with status `✅ Refactored`.
+- The next AC in Test Sequencing order is the continuation point.
+- Select ACs with status `🔴 Red` that do not yet have an implementation (no IMPL_FILES entry) as the batch to process.
+- If TRACEABILITY.md does not exist or has no entries: start from the first AC in Test Sequencing.
 
 Output:
 ```
@@ -195,6 +201,51 @@ Do NOT modify SPEC.md yourself. Do NOT guess the answer. STOP and return.
 
 ---
 
+## Step B_FINAL — Execute test suite
+
+Invoke `_shared/test-runner.md`. Wait for the return values before continuing.
+
+### If `test_execution_result == PASSED`
+
+Proceed to the Return Contract with `status: complete`.
+Include in the Return Contract under `metrics`:
+
+```yaml
+test_execution:
+  result: PASSED
+  runner: {test_runner}
+  mode: {test_execution_mode}
+```
+
+### If `test_execution_result == FAILED`
+
+Do NOT return `status: complete`. Do NOT advance to `forge approve`.
+
+Return immediately:
+
+```yaml
+status: tests_failing
+summary: "Tests fallando — BUILD bloqueado hasta resolver los tests en rojo."
+failed_tests:
+  - {each test name from failed_tests}
+action_required: >
+  Corregí los tests fallidos. Los tests RED son inmutables — si un test falla
+  por un bug en el test mismo, pedí aprobación explícita del dev antes de modificarlo.
+```
+
+### If `test_execution_result == SKIPPED`
+
+Return immediately:
+
+```yaml
+status: awaiting_test_confirmation
+summary: "Esperando output de tests del dev."
+action_required: >
+  Ejecutá los tests y pegá el output para continuar.
+```
+
+---
+
 ## Return Contract
 
 When running as a sub-agent, output this structured result at the end:
@@ -248,10 +299,10 @@ Violación de esta regla = BUILD inválido. El AC debe rehacerse desde RED.
 
 | Condition | Response |
 |-----------|----------|
-| SPEC not `✅ Aprobado` | Block. E200. |
+| SPEC not `✅ Aprobado` | Block. E204. |
 | BUILD already `✅ Aprobado` | Block. E201. Suggest `forge verify`. |
 | No active feature | Block. E202. Suggest `forge new`. |
 | Stack skill file not found | Block. E203. Output error with instructions to create it. |
-| SPEC.md not found | Block. E200 variant. |
+| SPEC.md not found | Block. E200. |
 | Implementation does not pass test in GREEN phase | Review implementation against SPEC. Fix implementation, NOT the test. If conflict with SPEC, use addendum protocol. |
 | Test appears to have genuine error in GREEN | STOP. Ask dev for permission to modify. Log as "Dev adjustment" in TRACEABILITY.md if approved. |

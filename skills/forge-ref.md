@@ -18,10 +18,10 @@ Consultar features cerradas como referencia canónica. Buscar por nombre, tag, p
 
 ## Preconditions
 
-- `forge/FORGE.md` exists and is readable
+- `.forge/FORGE.md` exists and is readable
 - `.forge/features/closed/` directory exists (can be empty)
 
-**E800**: "No encontré `forge/FORGE.md`. Este proyecto no está configurado para Forge."
+**E800**: "No encontré `.forge/FORGE.md`. Este proyecto no está configurado para Forge."
 **E801**: "No encontré `.forge/features/closed/`. No hay features cerradas todavía — se va a ir llenando a medida que uses `forge close`."
 
 **If FORGE.md not found:** output E800 and STOP.
@@ -31,7 +31,7 @@ Consultar features cerradas como referencia canónica. Buscar por nombre, tag, p
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -76,11 +76,11 @@ If `.forge/KNOWLEDGE.md` exists and is non-empty:
 
 If `.forge/KNOWLEDGE.md` does not exist or is empty, skip silently.
 
-### Step REF3 — forge-memory search (if available)
+### Step REF3 — forge-memory broader search (if available)
 
-a. Call `mem_search` with the query and project name
-b. Filter results matching topic_key patterns: `.forge/features/*`, `forge-close/*`
-c. For relevant matches, call `mem_get_observation` to get full content
+a. Call `forge_mem_search` with the query and project name
+b. Filter results matching topic_key patterns: `forge/{slug}/*`, `knowledge/*`
+c. For relevant matches, call `forge_mem_get` to get full content
 
 If forge-memory is not available → skip this step silently and rely on file search only.
 

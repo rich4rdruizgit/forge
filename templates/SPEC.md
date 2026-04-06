@@ -161,7 +161,7 @@ fun {{NombreComponente}}(
 |-------|-------|
 | **Contexto** | {{por qué surgió la decisión}} |
 | **Decisión** | {{qué se eligió}} |
-| **Referencia** | KNOWLEDGE.md#{{sección}} |
+| **Referencia** | forge-memory (topic_key: `knowledge/decision/{{slug}}`) |
 
 | Opción | Pros | Contras |
 |--------|------|---------|

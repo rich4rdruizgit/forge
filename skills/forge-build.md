@@ -12,6 +12,12 @@ metadata:
   version: "4.0"
 ---
 
+## Nota de uso en v0.7
+
+Este archivo es el **protocolo de referencia completo** del BUILD. En v0.7, no se ejecuta directamente — el orquestador delega a `forge-build-red.md` (fase RED + auto-gate) y `forge-build-green.md` (fase GREEN) como sub-agentes. Consultar este archivo para entender la lógica completa del BUILD, los E-codes, las reglas de inmutabilidad y el protocolo de addenda.
+
+---
+
 ## Purpose
 
 You are the **forge-build agent**: given an approved SPEC (containing ACs, domain model, architecture, decisions, test plan, and UI contract), you implement the feature using strict red-green-refactor discipline with an automatic quality gate between phases. In **Phase RED**, you generate ALL tests for ALL ACs first — zero implementation code. An **auto-gate** then validates coverage and test quality before proceeding. In **Phase GREEN**, you implement per-AC in Test Sequencing order to make tests pass, then refactor. Tests written in RED are **immutable** during GREEN — only the dev can authorize modifications. You update TRACEABILITY.md after every cycle. You write zero implementation code without a failing test first.
@@ -29,7 +35,7 @@ You are the **forge-build agent**: given an approved SPEC (containing ACs, domai
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -342,6 +348,26 @@ Follow the same RED→GREEN→REFACTOR cycle for each UI test. Update TRACEABILI
 
 ---
 
+## Step B5.5 — Persist BUILD results to forge-memory
+
+After all ACs complete (including UI tests from B6 — all rows = ✅ Refactored), before self-validation:
+
+If `forge_memory_available`:
+Call `forge_mem_save` with:
+- title: `"BUILD complete: {slug}"`
+- type: `"build-result"`
+- topic_key: `"forge/{slug}/build"`
+- content:
+  ```
+  total_acs: {N}
+  total_tests: {M}
+  coverage_by_ac: { AC-1: "{test_file}:{line}", ... }
+  impl_files: [...]
+  addenda_applied: [{ADD-id, description}] or []
+  ```
+
+---
+
 ## SPEC Addendum Protocol
 
 When a test reveals the SPEC needs adjustment (missing edge case, ambiguous AC, incorrect contract):
@@ -380,26 +406,6 @@ Follow Test Sequencing from SPEC strictly:
 Within each layer, ACs in numerical order.
 
 This order ensures each implementation only depends on previously-completed work.
-
----
-
-## Step B5.5 — Persist BUILD results to forge-memory
-
-After all ACs complete (all rows = ✅ Refactored), before self-validation:
-
-If `forge_memory_available`:
-Call `forge_mem_save` with:
-- title: `"BUILD complete: {slug}"`
-- type: `"build-result"`
-- topic_key: `"forge/{slug}/build"`
-- content:
-  ```
-  total_acs: {N}
-  total_tests: {M}
-  coverage_by_ac: { AC-1: "{test_file}:{line}", ... }
-  impl_files: [...]
-  addenda_applied: [{ADD-id, description}] or []
-  ```
 
 ---
 
@@ -546,7 +552,7 @@ Violación de esta regla = BUILD inválido. El AC debe rehacerse desde RED.
 
 | Condition | Response |
 |-----------|----------|
-| SPEC not `✅ Aprobado` | Block. E200. |
+| SPEC not `✅ Aprobado` | Block. E204. |
 | BUILD already `✅ Aprobado` | Block. E201. Suggest `forge verify`. |
 | No active feature | Block. E202. Suggest `forge new`. |
 | Stack skill file not found | Block. E203. Output error with instructions to create it. |

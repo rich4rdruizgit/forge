@@ -1,5 +1,5 @@
 # Assertions for VERIFY
-# Forge v0.4 Validation System
+# Forge v0.7 Validation System
 # Reorganized by the 5 Pillars (P1-P5)
 # ID format: P{pillar}-VERIFY-{NNN}
 
@@ -18,9 +18,10 @@ pillars:
         description: "Cada AC tiene evidencia de cumplimiento"
         severity: blocker
         verification: |
-          VERIFY.md contiene tabla donde cada AC-N tiene: test_id, impl_file
-          y status "Completo". Ningún AC tiene status "Pendiente" o vacío.
-        evidence_hint: "ACs con status en VERIFY.md"
+          VERIFY.md contiene tabla AC Coverage donde cada AC-N tiene: TEST_IDS,
+          IMPL_FILES y STATUS = "✅ Covered". Ningún AC tiene STATUS = "❌ Missing test"
+          o "❌ Missing implementation" o "❌ Not in TRACEABILITY".
+        evidence_hint: "ACs con STATUS ✅ Covered en VERIFY.md"
 
       - id: P1-VERIFY-002
         pillar: P1
@@ -40,13 +41,14 @@ pillars:
     assertions:
       - id: P2-VERIFY-001
         pillar: P2
-        description: "Código sigue patrones documentados en KNOWLEDGE.md"
+        description: "Código sigue patrones documentados en la SPEC (Sección 10)"
         severity: blocker
         verification: |
           La implementación real sigue los patrones de arquitectura referenciados
-          en la SPEC (Sección 10). Si hubo desviaciones durante GREEN, están
-          documentadas con justificación en VERIFY.md o en un addenda de la SPEC.
-        evidence_hint: "Patrones seguidos vs documentados en SPEC"
+          en la SPEC (Sección 10 — Decisiones Técnicas). Si hubo desviaciones
+          durante GREEN, están documentadas con justificación en VERIFY.md o
+          en un addenda de la SPEC.
+        evidence_hint: "Patrones seguidos vs documentados en SPEC Sección 10"
 
   # ─────────────────────────────────────────────
   # P3 — Tests de Comportamiento Real
@@ -122,9 +124,11 @@ pillars:
         description: "TRACEABILITY.md completamente lleno"
         severity: blocker
         verification: |
-          Todas las columnas de cada fila en TRACEABILITY.md tienen contenido.
-          No hay celdas vacías para ACs activos de esta feature.
-        evidence_hint: "Filas completas en TRACEABILITY.md"
+          Para cada AC activo en TRACEABILITY.md: AC_ID, AC_TITULO, TEST_IDS,
+          TEST_FILES, IMPL_FILES y STATUS tienen contenido.
+          Excepción válida: EVENTO_IDS puede estar vacío si el AC no genera
+          eventos de dominio (e.g., AC puramente de UI o configuración).
+        evidence_hint: "Filas completas en TRACEABILITY.md (EVENTO_IDS puede ser vacío)"
 
 # ─────────────────────────────────────────────
 # Bloques Condicionales

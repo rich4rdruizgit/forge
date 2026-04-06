@@ -20,9 +20,8 @@ modelos:
   fallback: gemini-2.0-flash   # Si no hay API key de Anthropic
 
 ciclo:
-  idioma: español              # español | english
-  fragmentar_en_puntos: 5      # Si story points > N, sugerir fragmentación
-  umbral_fragmentacion: 8
+  idioma: español              # informativo — los skills operan en español por defecto, este valor no cambia su comportamiento
+  umbral_fragmentacion: 8      # Si story points > N, forge-new sugiere fragmentar la HU
   commits_convencionales: true
   requiere_aprobacion: true    # El dev debe aprobar cada fase antes de avanzar
 
@@ -41,6 +40,9 @@ validacion:
     PROFUNDA: 2
 
 testing:
+  # test_command: "./gradlew test"   # Override opcional. Si está vacío, se detecta automáticamente.
+  #                                   # Útil para proyectos con comandos no estándar o monorepos.
+  #                                   # Ejemplos: "npm test", "cargo test", "pytest -x", "make test"
   estrategia: risk-based        # risk-based | comprehensive (default: risk-based)
   justificacion_requerida: true  # toda inclusión y exclusión de test debe ser defendida
   presupuesto:                   # TECHOS máximos, NO targets — el agente decide cuántos tests necesita
@@ -71,9 +73,8 @@ testing:
     max_pr_test_time_s: 180      # budget de tiempo total para tests en PR
 
 memoria:
-  knowledge_file: KNOWLEDGE.md
+  knowledge_file: .forge/KNOWLEDGE.md   # índice delgado — contenido canónico en forge-memory
   auto_extract_on_close: true
-  max_knowledge_entries: 200
 
 equipo:
   azure_organization: ""       # URL de tu Azure DevOps

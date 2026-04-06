@@ -4,7 +4,7 @@
 > **Stack:** {{STACK}}
 > **Fecha de cierre:** {{DATE}}
 > **Azure Story:** {{AZURE_STORY_ID}}
-> **Forge version:** v0.3
+> **Forge version:** v0.7
 
 ---
 

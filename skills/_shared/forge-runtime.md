@@ -9,14 +9,13 @@
 
 **Purpose**: Load feature context from forge-memory at session start. Replaces loading `KNOWLEDGE.md` entirely — knowledge is retrieved on-demand, only what's relevant.
 
-1. Attempt `forge_mem_context` call (project: `{slug}` if active feature, otherwise `"forge-global"`)
+1. Call `forge_mem_session_start(project: {slug or "forge-global"})`
    - If the tool is unavailable or errors → set `forge_memory_available: false`, skip to step 3
    - If available → set `forge_memory_available: true`
-2. Call `forge_mem_session_start(project: {slug or "forge-global"})`
-   - If active feature exists (slug non-null in FORGE.md):
-     - Call `forge_mem_feature_context(slug)` to load relevant context
-     - If results found AND non-empty: output a concise 2-3 line summary — do NOT dump everything
-     - If results empty → treat as forge_memory_available: false for context recovery (go to step 3)
+2. If active feature exists (slug non-null in FORGE.md):
+   - Call `forge_mem_feature_context(slug)` to load relevant context
+   - If results found AND non-empty: output a concise 2-3 line summary — do NOT dump everything
+   - If results empty → treat as forge_memory_available: false for context recovery (go to step 3)
 3. Proceed to R1
 
 ### Fallback — Artifact-based context recovery
@@ -49,18 +48,20 @@ Trigger this fallback when:
 
 This ensures the agent always has working context regardless of forge-memory availability.
 
-**Fallback rule for skills**: If `forge_memory_available: false`, every skill that would call forge-memory MUST fall back to reading `.forge/KNOWLEDGE.md` file instead. Never error on MCP unavailability.
+**Fallback rule for skills**: If `forge_memory_available: false`, every skill that would call forge-memory MUST fall back to reading `.forge/KNOWLEDGE.md` instead. KNOWLEDGE.md is a **thin index** — contains references and forge-memory topic keys, NOT full content. Never error on MCP unavailability.
 
 ---
 
 ## R1 — Read config
 
-Read `.forge/config.yaml` from the project root. Handle BOTH formats:
+Read `.forge/config.yaml` from the project root. The canonical format is nested:
 
-| Format | stack | modelo_agente | modelo_arch | lenguaje |
-|--------|-------|---------------|-------------|----------|
-| **Flat** | `stack` | `modelo_agente` | `modelo_arch` | `lenguaje` |
-| **Nested** | `stack.plataforma` | `modelos.default` | `modelos.architect` | `ciclo.idioma` |
+| Field | Key path |
+|-------|----------|
+| Platform | `stack.plataforma` |
+| Default model | `modelos.default` |
+| Architect model | `modelos.architect` |
+| Language | `ciclo.idioma` |
 
 **Defaults** (if field absent or file missing):
 
@@ -123,17 +124,33 @@ Then proceed to Execution Steps.
 
 ---
 
+## R5 — Session Close
+
+Execute this step **after** all skill-specific logic is complete and before returning the final response.
+
+**If `forge_memory_available: true`:**
+1. Call `forge_mem_session_end(project: {slug or "forge-global"})`
+2. Call `forge_mem_session_summary` with:
+   - `goal`: what the skill was asked to do
+   - `accomplished`: artifacts written, decisions made, validations run
+   - `next_steps`: what the dev should do next (`forge {phase}`)
+   - `relevant_files`: paths of files created or modified
+
+**If `forge_memory_available: false`:** skip silently — no error.
+
+> This step ensures that every forge command leaves a recoverable trace in forge-memory. Without R5, sessions accumulate as "started but never closed" and context recovery degrades over time.
+
+**Excepción**: Skills que manejan el cierre de sesión internamente (actualmente: `forge-close.md` vía K5) deben declarar explícitamente `R5_SKIP: true` en su frontmatter o en su sección de Forge Runtime. R5 NO se ejecuta para esos skills.
+
+---
+
 ## Shared Error Codes
 
-Cross-cutting errors reusable by any skill. Phase-specific errors (E050+, E100+, E200+, etc.) remain in each skill file.
+Cross-cutting errors reusable by any skill. Phase-specific errors (E002+, E050+, E100+, etc.) remain in each skill file.
 
 | Code | Condition | Message |
 |------|-----------|---------|
 | **E001** | `FORGE.md` not found | No encontré `.forge/FORGE.md`. Este proyecto no está configurado para Forge. |
-| **E002** | Active feature already exists (when creating new) | Ya hay una feature activa: {feature}. Ejecutá `forge close` antes de crear una nueva. |
-| **E003** | Templates directory missing | Falta `.forge/templates/`. Copiá los templates de FORGE antes de continuar. |
-| **E004** | Feature slug directory already exists | Ya existe `.forge/features/activo/{slug}/`. Elegí un nombre diferente o cerrá la feature existente. |
-| **E005** | Empty feature name | El nombre de la feature no puede estar vacío. Especificá un nombre: `forge new "nombre feature"`. |
 | **E010** | No active feature (generic) | No hay feature activa. Ejecutá `forge new "nombre feature"` primero. |
 | **E011** | Phase already approved (generic) | La fase {fase_actual} ya está ✅ Aprobado. Los artefactos aprobados son inmutables. |
 | **E012** | Required artifact not found (generic) | {PHASE}.md no encontrado. Ejecutá `forge {phase}` para generar el artefacto primero. |
@@ -142,7 +159,8 @@ Cross-cutting errors reusable by any skill. Phase-specific errors (E050+, E100+,
 
 | Range | Skill |
 |-------|-------|
-| E001–E005 | `forge-new` |
+| E001 | `forge-runtime` (shared — FORGE.md not found) |
+| E002–E009 | `forge-new` |
 | E010–E019 | Shared / generic |
 | E050–E059 | `forge-spike` |
 | E100–E109 | `forge-spec` |
