@@ -533,6 +533,11 @@ detect_project_name() {
         PROJECT_NAME=$(basename "$PWD")
     fi
 
+    if [[ ! "$PROJECT_NAME" =~ ^[a-zA-Z0-9][a-zA-Z0-9._[:space:]\-]{0,99}$ ]]; then
+        PROJECT_NAME="unknown-project"
+    fi
+    PROJECT_NAME=$(printf '%s' "$PROJECT_NAME" | tr -d '\n\r\t' | cut -c1-100)
+
     [[ -n "$PROJECT_NAME" ]] && info "Proyecto: $PROJECT_NAME" || true
 }
 
@@ -1155,8 +1160,14 @@ generate_yaml() {
                 case "$key" in
                     kotlin|agp|kotlinVersion|kotlin-version|agpVersion|agp-version|androidGradlePlugin) continue ;;
                 esac
+                if [[ ! "$key" =~ ^[a-zA-Z][a-zA-Z0-9_-]{0,49}$ ]]; then
+                    continue
+                fi
                 local val
                 val=$(kv_get "catalog" "$key")
+                if [[ ! "$val" =~ ^[0-9a-zA-Z._\-+]{1,50}$ ]]; then
+                    continue
+                fi
                 printf '    %s: "%s"\n' "$key" "$val"
             done <<< "$cat_keys"
         fi
@@ -1498,10 +1509,10 @@ update_config() {
 
     # proyecto.nombre
     if [[ -n "$PROJECT_NAME" ]]; then
-        local PROJECT_NAME_SAFE
-        PROJECT_NAME_SAFE=$(printf '%s' "$PROJECT_NAME" | sed 's/[|&\\/]/\\&/g')
-        sed -i.bak "s|nombre: \"Mi Proyecto\"|nombre: \"$PROJECT_NAME_SAFE\"|" "$config_file" || true
-        sed -i.bak "s|nombre: \".*\"|nombre: \"$PROJECT_NAME_SAFE\"|" "$config_file" || true
+        awk -v val="$PROJECT_NAME" '
+            /nombre: "/ { sub(/nombre: ".*"/, "nombre: \"" val "\"") }
+            { print }
+        ' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
     fi
 
     # proyecto.descripcion — auto-generate from detected data
@@ -1518,36 +1529,35 @@ update_config() {
     [[ $TOTAL_XML -gt 0 && $TOTAL_COMPOSABLES -eq 0 ]] && desc_parts="$desc_parts + XML"
     $HAS_COROUTINES && desc_parts="$desc_parts + Coroutines" || true
     $HAS_RXJAVA && desc_parts="$desc_parts + RxJava" || true
-    local desc_parts_safe
-    desc_parts_safe=$(printf '%s' "$desc_parts" | sed 's/[|&\\/]/\\&/g')
-    sed -i.bak "s|descripcion: \"Descripción breve del proyecto\"|descripcion: \"$desc_parts_safe\"|" "$config_file" || true
+    awk -v val="$desc_parts" '
+        /descripcion: "/ { sub(/descripcion: ".*"/, "descripcion: \"" val "\"") }
+        { print }
+    ' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
 
     # stack.arquitectura
     if [[ -n "$DOMINANT_PATTERN" && "$DOMINANT_PATTERN" != "unknown" ]]; then
-        local DOMINANT_PATTERN_SAFE
-        DOMINANT_PATTERN_SAFE=$(printf '%s' "$DOMINANT_PATTERN" | sed 's/[|&\\/]/\\&/g')
-        sed -i.bak "s|arquitectura:.*|arquitectura: clean+$DOMINANT_PATTERN_SAFE|" "$config_file" || true
+        awk -v val="$DOMINANT_PATTERN" '
+            /arquitectura:/ { sub(/arquitectura:.*/, "arquitectura: clean+" val) }
+            { print }
+        ' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
     fi
 
     # stack.di
     if [[ -n "$DI_FRAMEWORK" ]]; then
-        local DI_FRAMEWORK_SAFE
-        DI_FRAMEWORK_SAFE=$(printf '%s' "$DI_FRAMEWORK" | sed 's/[|&\\/]/\\&/g')
-        sed -i.bak "s|di:.*#\?.*|di: $DI_FRAMEWORK_SAFE|" "$config_file" || true
+        awk -v val="$DI_FRAMEWORK" '
+            /di:/ { sub(/di:.*/, "di: " val) }
+            { print }
+        ' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
     fi
 
     # stack.async
     if $HAS_COROUTINES && $HAS_RXJAVA; then
-        sed -i.bak "s|async:.*|async: coroutines+rxjava|" "$config_file" || true
+        awk '/async:/ { sub(/async:.*/, "async: coroutines+rxjava") } { print }' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
     elif $HAS_RXJAVA; then
-        sed -i.bak "s|async:.*|async: rxjava|" "$config_file" || true
+        awk '/async:/ { sub(/async:.*/, "async: rxjava") } { print }' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
     elif $HAS_COROUTINES; then
-        sed -i.bak "s|async:.*|async: coroutines|" "$config_file" || true
+        awk '/async:/ { sub(/async:.*/, "async: coroutines") } { print }' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
     fi
-    # If only coroutines, default is already correct
-
-    # Cleanup .bak files
-    rm -f "${config_file}.bak"
 
     success "config.yaml actualizado"
 }
