@@ -9,14 +9,13 @@
 
 **Purpose**: Load feature context from forge-memory at session start. Replaces loading `KNOWLEDGE.md` entirely — knowledge is retrieved on-demand, only what's relevant.
 
-1. Attempt `forge_mem_context` call (project: `{slug}` if active feature, otherwise `"forge-global"`)
+1. Call `forge_mem_session_start(project: {slug or "forge-global"})`
    - If the tool is unavailable or errors → set `forge_memory_available: false`, skip to step 3
    - If available → set `forge_memory_available: true`
-2. Call `forge_mem_session_start(project: {slug or "forge-global"})`
-   - If active feature exists (slug non-null in FORGE.md):
-     - Call `forge_mem_feature_context(slug)` to load relevant context
-     - If results found AND non-empty: output a concise 2-3 line summary — do NOT dump everything
-     - If results empty → treat as forge_memory_available: false for context recovery (go to step 3)
+2. If active feature exists (slug non-null in FORGE.md):
+   - Call `forge_mem_feature_context(slug)` to load relevant context
+   - If results found AND non-empty: output a concise 2-3 line summary — do NOT dump everything
+   - If results empty → treat as forge_memory_available: false for context recovery (go to step 3)
 3. Proceed to R1
 
 ### Fallback — Artifact-based context recovery
@@ -140,6 +139,8 @@ Execute this step **after** all skill-specific logic is complete and before retu
 **If `forge_memory_available: false`:** skip silently — no error.
 
 > This step ensures that every forge command leaves a recoverable trace in forge-memory. Without R5, sessions accumulate as "started but never closed" and context recovery degrades over time.
+
+**Excepción**: Skills que manejan el cierre de sesión internamente (actualmente: `forge-close.md` vía K5) deben declarar explícitamente `R5_SKIP: true` en su frontmatter o en su sección de Forge Runtime. R5 NO se ejecuta para esos skills.
 
 ---
 

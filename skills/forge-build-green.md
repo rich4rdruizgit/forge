@@ -85,10 +85,16 @@ If SPEC.md is not found:
 
 ## Step B3 — Determine continuation point
 
-Read `.forge/features/activo/{slug}/TRACEABILITY.md` if it exists:
-- Find the last AC with status `✅ Refactored`
-- The next AC in Test Sequencing order is the continuation point
-- If TRACEABILITY.md does not exist or has no entries: start from the first AC in Test Sequencing
+**If an `input_contract` was provided by the orchestrator** (standard execution):
+- Use the `ac_batch` from the input contract directly as the list of ACs to implement.
+- Do NOT read TRACEABILITY.md to derive the batch — the orchestrator already determined it.
+
+**If no `input_contract` is present** (standalone execution — fallback):
+- Read `.forge/features/activo/{slug}/TRACEABILITY.md` if it exists.
+- Find the last AC with status `✅ Refactored`.
+- The next AC in Test Sequencing order is the continuation point.
+- Select ACs with status `🔴 Red` that do not yet have an implementation (no IMPL_FILES entry) as the batch to process.
+- If TRACEABILITY.md does not exist or has no entries: start from the first AC in Test Sequencing.
 
 Output:
 ```
