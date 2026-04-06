@@ -59,7 +59,7 @@ yaml_escape() {
     if [[ -z "$val" ]]; then
         printf '""'
     elif printf '%s' "$val" | rg -q '[:\#\[\]\{\},&*!|><%@`"'"'"'\\]' 2>/dev/null; then
-        printf '"%s"' "$(printf '%s' "$val" | sed 's/"/\\"/g')"
+        printf '"%s"' "$(printf '%s' "$val" | sed 's/\\/\\\\/g; s/"/\\"/g')"
     else
         printf '%s' "$val"
     fi
@@ -1500,6 +1500,7 @@ update_config() {
     # proyecto.nombre
     if [[ -n "$PROJECT_NAME" ]]; then
         awk -v val="$PROJECT_NAME" '
+            BEGIN { gsub(/[\\&]/, "\\\\&", val) }
             /nombre: "/ { sub(/nombre: ".*"/, "nombre: \"" val "\"") }
             { print }
         ' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
@@ -1520,6 +1521,7 @@ update_config() {
     $HAS_COROUTINES && desc_parts="$desc_parts + Coroutines" || true
     $HAS_RXJAVA && desc_parts="$desc_parts + RxJava" || true
     awk -v val="$desc_parts" '
+        BEGIN { gsub(/[\\&]/, "\\\\&", val) }
         /descripcion: "/ { sub(/descripcion: ".*"/, "descripcion: \"" val "\"") }
         { print }
     ' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
@@ -1527,6 +1529,7 @@ update_config() {
     # stack.arquitectura
     if [[ -n "$DOMINANT_PATTERN" && "$DOMINANT_PATTERN" != "unknown" ]]; then
         awk -v val="$DOMINANT_PATTERN" '
+            BEGIN { gsub(/[\\&]/, "\\\\&", val) }
             /arquitectura:/ { sub(/arquitectura:.*/, "arquitectura: clean+" val) }
             { print }
         ' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
@@ -1535,6 +1538,7 @@ update_config() {
     # stack.di
     if [[ -n "$DI_FRAMEWORK" ]]; then
         awk -v val="$DI_FRAMEWORK" '
+            BEGIN { gsub(/[\\&]/, "\\\\&", val) }
             /di:/ { sub(/di:.*/, "di: " val) }
             { print }
         ' "$config_file" > "${config_file}.tmp" && mv "${config_file}.tmp" "$config_file"
