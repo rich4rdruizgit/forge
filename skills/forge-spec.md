@@ -149,6 +149,55 @@ Wait for dev response. Document findings in sections 5a and 5b.
 
 ---
 
+## Step 5-PRE — Detect base package
+
+Before building §5b (Componentes Nuevos), detect the project's base package so that
+all proposed file paths use the correct namespace. Run this step silently — no output
+to the dev unless detection fails or requires input.
+
+### Android / KMP (when `stack` is `android` or `kmp`)
+
+Execute in order — stop at the first successful result:
+
+1. Find `app/build.gradle.kts` or `app/build.gradle`.
+   Extract `applicationId` (preferred) or `namespace` from the `android { }` block.
+2. If not found: find `app/src/main/AndroidManifest.xml`.
+   Extract the `package` attribute from the `<manifest>` tag.
+3. If not found: find any `.kt` file under `app/src/main/java/`.
+   Extract the first `package com.xxx` declaration.
+
+Set `base_package = {extracted value}`.
+
+If none of the three steps yielded a result:
+- Set `base_package = null`
+- Emit **E105** (warning, not blocker):
+  > ⚠️ E105: No se pudo detectar el package base del proyecto automáticamente.
+  > Revisá los paths propuestos en §5b — contienen el placeholder `{base_package}`
+  > que debés reemplazar con el namespace real (ej. `com.example.miapp`).
+  > Fuentes consultadas: `app/build.gradle.kts`, `app/build.gradle`,
+  > `app/src/main/AndroidManifest.xml`, y archivos `.kt` en `app/src/main/java/`.
+
+### Otros stacks
+
+- `package.json` existe → usar el campo `name` como referencia de contexto
+  (no es un package de código directamente, pero informa el nombre del proyecto)
+- `go.mod` existe → extraer `module {name}` como `base_package`
+- Archivos `.py` → no hay package formal; usar el directorio raíz como referencia
+- Si nada encontrado → preguntar al dev:
+  > "¿Cuál es el package/namespace base del proyecto?"
+  > Esperá respuesta antes de continuar con §5b.
+
+### Uso en §5b
+
+Cuando el agente proponga paths de archivos nuevos en §5b:
+- Si `base_package` fue detectado → usar como prefijo del package en todos los paths.
+  Ejemplo: `com.example.testforge.counter.presentation.CounterFragment`
+- Si `base_package` es null y el dev no respondió → usar el placeholder `{base_package}`
+  en los paths de forma explícita para que sea evidente que falta completar.
+  Ejemplo: `{base_package}.counter.presentation.CounterFragment`
+
+---
+
 ## Step 5 — Complete Sections by Depth [P1-P5]
 
 Ask SPECIFIC questions, never generic:
@@ -344,6 +393,7 @@ After generating SPEC.md:
 | E102 | Stack skill file not found | Block. Instruct to create stack skill. |
 | E103 | SPEC.md not found on disk | Warn. Recreate from template and continue. |
 | E104 | Quality Score < 7 | Warn. List corrections by pillar. |
+| E105 | Base package not detected (Android/KMP only) | Warn. Emit placeholder `{base_package}` in §5b paths. Instruct dev to replace with real namespace. |
 
 ---
 

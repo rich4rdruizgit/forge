@@ -230,9 +230,24 @@ conditionals:
         description: "Estados de UI cubren todos los escenarios de los ACs"
         severity: blocker
         verification: |
-          Sección 8 (Estados de UI) incluye al menos: loading, error, empty, success
-          para cada pantalla. Cada estado mapea a al menos un AC.
-        evidence_hint: "Estados por pantalla y sus ACs"
+          La assertion pasa con CUALQUIERA de estas dos opciones:
+
+          Opción A — Feature async (red, base de datos, I/O externo):
+            Sección 8 incluye al menos: loading, error, empty, success para cada pantalla.
+            Cada uno de esos estados mapea a al menos un AC.
+
+          Opción B — Feature síncrona local (estado en memoria, sin I/O externo):
+            Sección 8 contiene una declaración explícita de por qué loading/error/empty
+            no aplican. La declaración DEBE especificar que la feature es síncrona y local
+            (sin operaciones de red, base de datos, ni I/O externo). Solo se requieren
+            los estados que sí aplican, cada uno mapeado a al menos un AC.
+
+          FALLA si: §8 existe pero no tiene ni los estados mínimos (A) ni la
+          justificación de sincronía (B).
+        evidence_hint: |
+          Indicar cuál opción aplica:
+          - Opción A: listar estados (loading/error/empty/success) y sus ACs por pantalla.
+          - Opción B: citar la declaración de sincronía local y los estados que sí aplican con sus ACs.
 
       - id: P3-SPEC-UI-001
         pillar: P3
