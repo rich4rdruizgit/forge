@@ -1,5 +1,5 @@
 # Assertions for BUILD
-# Forge v0.4 Validation System
+# Forge v0.7 Validation System
 # Reorganized by the 5 Pillars (P1-P5)
 # ID format: P{pillar}-BUILD-{NNN}
 #
@@ -103,12 +103,15 @@ pillars:
     assertions:
       - id: P1-BUILD-001
         pillar: P1
-        description: "Cada AC tiene al menos 1 test (validación build completa)"
+        description: "Cada AC tiene test propio o cross-reference documentado"
         severity: blocker
         verification: |
-          Coverage Matrix en TRACEABILITY.md: columna TEST_IDS no vacía
-          para ningún AC. Cada AC del SPEC está representado.
-        evidence_hint: "ACs con TEST_IDS en Coverage Matrix"
+          Coverage Matrix en TRACEABILITY.md: columna TEST_IDS no vacía para ningún AC.
+          Para ACs con test propio: TEST_IDS apunta al test generado.
+          Para ACs excluidos (risk-based): TEST_IDS apunta al test que los cubre
+          (cross-reference). La exclusión debe estar justificada en el checkpoint
+          de auto-gate. Un AC sin TEST_IDS Y sin justificación de exclusión: FALLA.
+        evidence_hint: "TEST_IDS por AC: test propio o cross-reference justificado"
 
   # ─────────────────────────────────────────────
   # P2 — Consistencia Arquitectónica
@@ -124,7 +127,7 @@ pillars:
         verification: |
           >= 80% de los tests siguen el patrón de naming documentado
           en el skill del stack (JUnit5 + MockK: methodName_condition_expectedResult
-          o equivalente establecido en KNOWLEDGE.md).
+          o equivalente establecido en forge-memory / KNOWLEDGE.md en fallback).
         evidence_hint: "Ratio de tests con naming correcto"
 
       - id: P2-BUILD-002
@@ -133,9 +136,9 @@ pillars:
         severity: blocker
         verification: |
           La implementación no introduce patrones arquitectónicos que no estén
-          en KNOWLEDGE.md o que no tengan justificación documentada en la SPEC
-          (Sección 10 - Decisiones Técnicas).
-        evidence_hint: "Nuevos patrones introducidos vs KNOWLEDGE.md"
+          en forge-memory (o KNOWLEDGE.md en fallback) o que no tengan justificación
+          documentada en la SPEC (Sección 10 - Decisiones Técnicas).
+        evidence_hint: "Nuevos patrones introducidos vs forge-memory / KNOWLEDGE.md"
 
       - id: P2-BUILD-003
         pillar: P2
@@ -323,9 +326,10 @@ pillars:
         description: "Coverage Matrix completa en TRACEABILITY.md"
         severity: blocker
         verification: |
-          TRACEABILITY.md contiene tabla con columnas: AC_ID, TEST_IDS, IMPL_FILES,
-          STATUS. Ninguna columna vacía para ACs activos.
-        evidence_hint: "Dimensiones de Coverage Matrix"
+          TRACEABILITY.md contiene tabla con todas las columnas: AC_ID, AC_TITULO,
+          EVENTO_IDS, TEST_IDS, TEST_FILES, IMPL_FILES, STATUS.
+          Ninguna columna vacía para ACs activos (ver P1-BUILD-001 para TEST_IDS).
+        evidence_hint: "Columnas de Coverage Matrix vs template de forge-build"
 
 # ─────────────────────────────────────────────
 # Bloques Condicionales

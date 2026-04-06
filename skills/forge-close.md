@@ -29,6 +29,7 @@ Closes a completed feature cycle: validates all required phases are `✅ Aprobad
 ## Forge Runtime
 
 → Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ **R5 exception**: K5 handles `forge_mem_session_summary` and `forge_mem_session_end` explicitly. Do NOT run R5 after skill logic — session close is already managed within Step C2.5.
 
 ---
 
@@ -120,7 +121,26 @@ Present each candidate with concrete format. The dev approves, edits, or rejects
    entries: {approved entries from K3}
    ```
 
-3. Call `forge_mem_session_summary` con:
+3. Save feature summary — call `forge_mem_save` with:
+   ```
+   title: "Feature cerrada: {feature}"
+   type: "project"
+   topic_key: "forge/{slug}/summary"
+   content:
+     feature: {feature}
+     slug: {slug}
+     stack: {stack from config.yaml}
+     fecha_cierre: {today}
+     validation_score: {overall score or N/A}
+     acceptance_criteria: {list all ACs from SPEC.md}
+     domain_events: {list all events from SPEC.md Domain Model}
+     architecture_decisions: {list all decisions from SPEC.md Decisiones Técnicas}
+     key_files: {list from SPEC.md Components}
+     patterns_used: {patterns from approved K3 entries}
+     tags: {auto-generated tags from INDEX.md}
+   ```
+
+4. Call `forge_mem_session_summary` con:
    ```
    goal: "Feature cerrada: {title}"
    accomplished:
@@ -136,7 +156,7 @@ Present each candidate with concrete format. The dev approves, edits, or rejects
      - .forge/features/closed/{slug}/VERIFY.md
    ```
 
-4. Call `forge_mem_session_end(project: {slug})`
+5. Call `forge_mem_session_end(project: {slug})`
 
 **If forge-memory NOT available:** skip K5 silently, continuar con K4. En este caso KNOWLEDGE.md recibirá el contenido completo como fallback de último recurso (ver regla K4-fallback más abajo).
 
@@ -232,49 +252,6 @@ Para comenzar una nueva feature: `forge new "nombre de la nueva feature"`
 - SIEMPRE mover los artefactos (no copiar) — la carpeta activo/{slug}/ debe quedar vacía
 - NUNCA borrar artefactos — van a closed/, no a la papelera
 - NUNCA resetear FORGE.md si la operación de mover falló
-
----
-
-## forge-memory Memory
-
-After archiving, save the completed feature to forge-memory so future features can learn from it.
-
-**If forge-memory tools are available** (`mem_save`), execute:
-
-Call `mem_save` with:
-- **title**: `Feature cerrada: {feature-name}`
-- **type**: `project`
-- **topic_key**: `.forge/features/{slug}`
-- **content**:
-  ```
-  **Feature**: {feature-name}
-  **Slug**: {slug}
-  **Stack**: {stack value from .forge/config.yaml}
-  **Fecha de cierre**: {today's date}
-  **Validation Score**: {overall validation score or N/A}
-
-  **Acceptance Criteria (de SPEC.md §1)**:
-  {list all ACs from the closed feature's SPEC.md §1 Requirements}
-
-  **Domain Events (de SPEC.md §2)**:
-  {list all domain events from the closed feature's SPEC.md §2 Domain Model}
-
-  **Architecture Decisions (de SPEC.md §4)**:
-  {list all decisions from the closed feature's SPEC.md §4 Decisions}
-
-  **Key Files (de SPEC.md §3)**:
-  {list of files/modules affected from SPEC.md §3 Architecture}
-
-  **Decisiones clave**:
-  {any notable architectural or design decisions found in SPEC.md §4}
-
-  **Patterns**:
-  {patterns and conventions used}
-
-  **Tags**: {comma-separated tags from INDEX.md}
-  ```
-
-If forge-memory is not available, skip silently — do NOT block or warn. Forge works without forge-memory.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: forge-spike
 description: >
-  Interactive SPIKE elicitation for Forge v0.3. Guides the developer through a structured technical
+  Interactive SPIKE elicitation for Forge v0.7. Guides the developer through a structured technical
   investigation: question, options, prototyping, decision, and SPEC impact. ONE question per SPIKE.
   Trigger: `forge spike` command with FORGE.md present and fase_actual = SPIKE.
 license: Apache-2.0
@@ -12,7 +12,7 @@ metadata:
 
 ## Purpose
 
-You are the SPIKE Investigation Agent for Forge v0.3. Your sole job is to conduct an interactive session with the developer to investigate a specific technical question BEFORE committing to a SPEC. You guide the dev through each section of SPIKE.md: defining the question, exploring options, evaluating viability, making a decision, and documenting impact on the upcoming SPEC. You do NOT skip sections or auto-fill answers — every decision in SPIKE.md was explicitly explored and confirmed by the developer.
+You are the SPIKE Investigation Agent for Forge v0.7. Your sole job is to conduct an interactive session with the developer to investigate a specific technical question BEFORE committing to a SPEC. You guide the dev through each section of SPIKE.md: defining the question, exploring options, evaluating viability, making a decision, and documenting impact on the upcoming SPEC. You do NOT skip sections or auto-fill answers — every decision in SPIKE.md was explicitly explored and confirmed by the developer.
 
 ---
 
@@ -25,8 +25,8 @@ You are the SPIKE Investigation Agent for Forge v0.3. Your sole job is to conduc
 **If no active feature — E050:**
 > 🚫 E050: No hay feature activa. Ejecutá `forge new "nombre feature"` primero.
 
-**If fase_actual is not SPIKE — E050:**
-> 🚫 E050: La fase actual no es SPIKE. Verificá el estado en FORGE.md.
+**If fase_actual is not SPIKE — E053:**
+> 🚫 E053: La fase actual no es SPIKE. Verificá el estado en FORGE.md.
 
 **If SPIKE already completed — E051:**
 > 🚫 E051: El SPIKE ya está ✅ Aprobado. Los artefactos aprobados son inmutables. Si necesitás una nueva investigación, creá una feature nueva.
@@ -35,7 +35,7 @@ You are the SPIKE Investigation Agent for Forge v0.3. Your sole job is to conduc
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -43,7 +43,7 @@ You are the SPIKE Investigation Agent for Forge v0.3. Your sole job is to conduc
 
 ### Step 1 — Read existing SPIKE.md
 
-Read `forge/features/activo/{slug}/SPIKE.md`.
+Read `.forge/features/activo/{slug}/SPIKE.md`.
 
 - If SPIKE.md has no content yet (only template placeholders): start elicitation from scratch.
 - If SPIKE.md has partial content: resume from where it left off, skip sections already completed.
@@ -78,7 +78,7 @@ Wait for response. Write the value in the SPIKE.md header `Time-box` field.
 **If forge-memory tools are available** (`mem_search`), before exploring options:
 
 1. Extract 2-3 keywords from the technical question and context
-2. Call `mem_search` with those keywords
+2. Call `forge_mem_search` with those keywords
 3. If relevant past SPIKEs, decisions, or discoveries are found:
    - Surface them as context:
      "En una investigación previa encontré esto: [{relevant finding or decision}].
@@ -237,13 +237,34 @@ Show a compact summary:
 
 ---
 
+### Step 10.5 — Persist SPIKE results to forge-memory
+
+After Step 9 checklist passes and before returning the envelope:
+
+If `forge_memory_available`:
+Call `forge_mem_save` with:
+- title: `"SPIKE complete: {slug} — {pregunta (first 60 chars)}"`
+- type: `"spike-result"`
+- topic_key: `"forge/{slug}/spike"`
+- content:
+  ```
+  question: {pregunta técnica}
+  options_evaluated: [{opción A, opción B, ...}]
+  decision: {opción elegida}
+  reasoning: {razonamiento del dev}
+  spec_impact: {restricciones o decisiones para la SPEC}
+  residual_risks: [{riesgo, probabilidad, mitigación}] or []
+  ```
+
+---
+
 ### Step 11 — Return envelope
 
 ### Success
 ```
 **Estado**: `complete`
 **Resumen**: SPIKE completado. Pregunta investigada: "{pregunta}". Decisión: {opción elegida}. {N} opciones evaluadas. Impacto en SPEC documentado.
-**Artefacto**: `forge/features/activo/{slug}/SPIKE.md`
+**Artefacto**: `.forge/features/activo/{slug}/SPIKE.md`
 **Siguiente comando**: `forge approve`
 ```
 
@@ -258,7 +279,7 @@ Show a compact summary:
 ```
 **Estado**: `discarded`
 **Resumen**: SPIKE concluye que la feature no es viable. Razón: {razonamiento}.
-**Artefacto**: `forge/features/activo/{slug}/SPIKE.md`
+**Artefacto**: `.forge/features/activo/{slug}/SPIKE.md`
 **Siguiente comando**: `forge close` (para archivar la feature descartada)
 ```
 
@@ -280,6 +301,7 @@ Show a compact summary:
 
 | Code | Condition | Response |
 |------|-----------|----------|
-| E050 | No active feature or fase_actual ≠ SPIKE | Block. Instruct `forge new` or check FORGE.md. |
+| E050 | No active feature | Block. Instruct `forge new`. |
 | E051 | SPIKE already `✅ Aprobado` | Block. Artifacts are immutable. |
 | E052 | SPIKE.md template not found | Warn. Recreate from template structure and continue. |
+| E053 | fase_actual ≠ SPIKE | Block. Instruct to check FORGE.md state. |

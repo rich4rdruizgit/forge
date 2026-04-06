@@ -72,7 +72,7 @@ Antes de cualquier acción, leer:
 | `forge trace` | Skill: forge-trace.md — Genera traceability matrix AC→Evento→UI State→Test→Impl |
 | `forge ref <query>` | Skill: forge-ref.md — Consulta forge-memory + INDEX.md de features cerradas |
 | `forge status` | Skill: forge-status.md — Estado actual del ciclo con validation scores |
-| `forge close` | Skill: forge-close.md — Archiva feature + extrae conocimiento a KNOWLEDGE.md + indexa en forge-memory |
+| `forge close` | Skill: forge-close.md — Archiva feature + extrae conocimiento a forge-memory (canonical) + actualiza KNOWLEDGE.md index |
 
 ### forge scan — El Arqueólogo
 
@@ -127,8 +127,8 @@ setup-project.sh                      ← bootstrap del proyecto
 
 templates/
 ├── SPIKE.md                          ← investigación técnica
-├── SPEC.md                           ← 15 secciones, profundidad adaptativa (v0.4)
-├── KNOWLEDGE.md                      ← template vacío para setup
+├── SPEC.md                           ← 15 secciones, profundidad adaptativa (v0.7)
+├── KNOWLEDGE.md                      ← template vacío para setup (thin index)
 ├── VERIFY.md                         ← verificación post-implementación
 ├── TRACEABILITY.md                   ← matriz de trazabilidad
 ├── VALIDATION.md                     ← reporte de validación
@@ -136,10 +136,10 @@ templates/
 
 validation/
 ├── assertions-spike.yaml
-├── assertions-spec.yaml              ← por pilares P1-P5 + condicionales (v0.4)
-├── assertions-build.yaml             ← por pilares + auto-gate (v0.4)
-├── assertions-verify.yaml            ← por pilares + condicionales (v0.4)
-└── assertions-cross.yaml             ← IDs formato P{n} (v0.4)
+├── assertions-spec.yaml              ← por pilares P1-P5 + condicionales (v0.7)
+├── assertions-build.yaml             ← por pilares + auto-gate (v0.7)
+├── assertions-verify.yaml            ← por pilares + condicionales (v0.7)
+└── assertions-cross.yaml             ← IDs formato P{n} (v0.7)
 
 stacks/
 ├── android.md
@@ -148,7 +148,7 @@ stacks/
 
 skills/
 ├── _shared/
-│   └── forge-runtime.md              ← runtime compartido R0-R4 + sub-agent mode (v0.7)
+│   └── forge-runtime.md              ← runtime compartido R0-R5 + sub-agent mode (v0.7)
 ├── forge-orchestrator.md             ← coordina fases inline vs sub-agentes (v0.7)
 ├── forge-new.md                      ← carga HU, profundidad, consulta forge-memory (v0.5)
 ├── forge-spike.md
@@ -162,7 +162,7 @@ skills/
 ├── forge-trace.md                    ← + return contract para sub-agent mode (v0.7)
 ├── forge-ref.md                      ← busca en forge-memory (v0.5), fallback KNOWLEDGE.md
 ├── forge-status.md
-└── forge-close.md                    ← extrae a KNOWLEDGE.md + indexa en forge-memory (v0.5)
+└── forge-close.md                    ← forge-memory canonical + KNOWLEDGE.md index (v0.7)
 
 features/
 ├── activo/

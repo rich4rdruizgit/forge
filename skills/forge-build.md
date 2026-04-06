@@ -29,7 +29,7 @@ You are the **forge-build agent**: given an approved SPEC (containing ACs, domai
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -342,6 +342,26 @@ Follow the same RED→GREEN→REFACTOR cycle for each UI test. Update TRACEABILI
 
 ---
 
+## Step B5.5 — Persist BUILD results to forge-memory
+
+After all ACs complete (including UI tests from B6 — all rows = ✅ Refactored), before self-validation:
+
+If `forge_memory_available`:
+Call `forge_mem_save` with:
+- title: `"BUILD complete: {slug}"`
+- type: `"build-result"`
+- topic_key: `"forge/{slug}/build"`
+- content:
+  ```
+  total_acs: {N}
+  total_tests: {M}
+  coverage_by_ac: { AC-1: "{test_file}:{line}", ... }
+  impl_files: [...]
+  addenda_applied: [{ADD-id, description}] or []
+  ```
+
+---
+
 ## SPEC Addendum Protocol
 
 When a test reveals the SPEC needs adjustment (missing edge case, ambiguous AC, incorrect contract):
@@ -380,26 +400,6 @@ Follow Test Sequencing from SPEC strictly:
 Within each layer, ACs in numerical order.
 
 This order ensures each implementation only depends on previously-completed work.
-
----
-
-## Step B5.5 — Persist BUILD results to forge-memory
-
-After all ACs complete (all rows = ✅ Refactored), before self-validation:
-
-If `forge_memory_available`:
-Call `forge_mem_save` with:
-- title: `"BUILD complete: {slug}"`
-- type: `"build-result"`
-- topic_key: `"forge/{slug}/build"`
-- content:
-  ```
-  total_acs: {N}
-  total_tests: {M}
-  coverage_by_ac: { AC-1: "{test_file}:{line}", ... }
-  impl_files: [...]
-  addenda_applied: [{ADD-id, description}] or []
-  ```
 
 ---
 
@@ -546,7 +546,7 @@ Violación de esta regla = BUILD inválido. El AC debe rehacerse desde RED.
 
 | Condition | Response |
 |-----------|----------|
-| SPEC not `✅ Aprobado` | Block. E200. |
+| SPEC not `✅ Aprobado` | Block. E204. |
 | BUILD already `✅ Aprobado` | Block. E201. Suggest `forge verify`. |
 | No active feature | Block. E202. Suggest `forge new`. |
 | Stack skill file not found | Block. E203. Output error with instructions to create it. |

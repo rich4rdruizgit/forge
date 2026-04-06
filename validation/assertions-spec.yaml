@@ -1,5 +1,5 @@
 # Assertions for SPEC
-# Forge v0.4 Validation System
+# Forge v0.7 Validation System
 # Reorganized by the 5 Pillars (P1-P5)
 # ID format: P{pillar}-SPEC-{NNN}
 
@@ -97,22 +97,23 @@ pillars:
     assertions:
       - id: P2-SPEC-001
         pillar: P2
-        description: "KNOWLEDGE.md consultado en Step 0"
+        description: "forge-memory (o KNOWLEDGE.md en fallback) consultado en Step 1"
         severity: blocker
         verification: |
-          Sección 10 (Decisiones Técnicas) referencia entradas de KNOWLEDGE.md
-          o declara explícitamente que KNOWLEDGE.md está vacío.
-          Si KNOWLEDGE.md tiene contenido y no se referencia: FALLA.
-        evidence_hint: "Referencias a KNOWLEDGE.md o declaración de vacío"
+          Sección 10 (Decisiones Técnicas) referencia entradas de forge-memory
+          o de KNOWLEDGE.md (modo fallback), o declara explícitamente que no hay
+          patrones previos. Si hay patrones disponibles y no se referencian: FALLA.
+        evidence_hint: "Referencias a forge-memory / KNOWLEDGE.md o declaración de sin patrones previos"
 
       - id: P2-SPEC-002
         pillar: P2
         description: "Desviaciones de patrones establecidos están justificadas"
         severity: blocker
         verification: |
-          Si la SPEC usa un patrón diferente al documentado en KNOWLEDGE.md,
-          la desviación tiene justificación técnica explícita en Sección 10.
-        evidence_hint: "Patrones usados vs KNOWLEDGE.md"
+          Si la SPEC usa un patrón diferente al documentado en forge-memory
+          (o KNOWLEDGE.md en fallback), la desviación tiene justificación técnica
+          explícita en Sección 10.
+        evidence_hint: "Patrones usados vs patrones en forge-memory / KNOWLEDGE.md"
 
       - id: P2-SPEC-003
         pillar: P2
@@ -160,6 +161,18 @@ pillars:
           no frases genéricas como "código limpio" o "buenas prácticas".
           Cada criterio de DoD puede marcarse como cumplido o no.
         evidence_hint: "Criterios de DoD"
+
+      - id: P3-SPEC-004
+        pillar: P3
+        description: "Sección 14 (Estrategia de Testing) presente con análisis de riesgo"
+        severity: blocker
+        verification: |
+          Sección 14 existe y tiene contenido para todas las profundidades.
+          Debe incluir: (1) análisis de riesgo por AC (qué puede fallar en producción),
+          (2) distribución de capas justificada (unit/integration/ui), y
+          (3) presupuesto de tests alineado con ceilings de config.yaml → testing.presupuesto.{PROFUNDIDAD}.
+          Una sección 14 vacía o con solo "N/A" es blocker.
+        evidence_hint: "Sección 14 con análisis de riesgo, distribución y presupuesto"
 
   # ─────────────────────────────────────────────
   # P4 — Integración con lo Existente
@@ -238,7 +251,7 @@ conditionals:
         description: "Contrato de API referencia endpoint existente o documenta uno nuevo"
         severity: blocker
         verification: |
-          Si el endpoint ya existe: referencia a KNOWLEDGE.md o documentación existente.
+          Si el endpoint ya existe: referencia a forge-memory, KNOWLEDGE.md o documentación existente.
           Si es nuevo: endpoint, método HTTP, request y response documentados.
         evidence_hint: "Endpoint y referencia"
 

@@ -2,7 +2,7 @@
 
 > Rama: `feature/full-audit-review`
 > Objetivo: Revisar cada archivo del proyecto punto a punto — consistencia, calidad, gaps, mejoras.
-> Estado: 🔄 En progreso
+> Estado: ✅ Completado — 2026-04-05
 
 ---
 
@@ -35,12 +35,12 @@ Resultado por archivo: ✅ OK | ⚠️ Issues menores | 🔴 Issues críticos | 
 
 | # | Archivo | Líneas | Estado | Notas |
 |---|---------|--------|--------|-------|
-| 1 | `config.yaml` | 80 | ⏳ | Stack, modelos LLM, umbrales. Cambiar aquí afecta TODO. |
-| 2 | `skills/_shared/forge-runtime.md` | 189 | ⏳ | Protocolo R0–R4. Todos los skills lo ejecutan primero. |
-| 3 | `skills/forge-spec.md` | 365 | ⏳ | 7-pasos, 5 Pillars, quality score. Core del pipeline. |
-| 4 | `skills/forge-build.md` | 584 | ⏳ | Orquestador RED→GREEN, auto-gate. El skill más complejo. |
-| 5 | `validation/assertions-spec.yaml` | 347 | ⏳ | Gates de SPEC. Define qué es "aprobable". |
-| 6 | `validation/assertions-build.yaml` | 445 | ⏳ | Gates de BUILD. Inmutabilidad, coverage, calidad. |
+| 1 | `config.yaml` | 79 | ✏️ | 4 fixes: fragmentar_en_puntos removida, max_knowledge_entries removida, knowledge_file path corregido, idioma comentado como informativo. |
+| 2 | `skills/_shared/forge-runtime.md` | 189 | ✏️ | 4 fixes: R0 KNOWLEDGE.md clarified as thin index; R1 nested-only; E001–E009 ownership; nuevo R5 session close. |
+| 3 | `skills/forge-spec.md` | 365 | ✏️ | 4 fixes: R5 added; edge cases table LIGERA/MEDIA/PROFUNDA; KNOWLEDGE.md refs → forge-memory; Rule 11 updated. |
+| 4 | `skills/forge-build.md` | 584 | ✏️ | 3 fixes: R5 added; E204 for SPEC-not-approved; B5.5 moved after B6. |
+| 5 | `validation/assertions-spec.yaml` | 347 | ✏️ | 4 fixes: v0.7; P2-SPEC-001 step; forge-memory refs; new P3-SPEC-004. |
+| 6 | `validation/assertions-build.yaml` | 445 | ✏️ | 4 fixes: v0.7; P1-BUILD-001 cross-ref exclusions; P2 updated; P5-BUILD-002 columns. |
 
 ---
 
@@ -48,14 +48,14 @@ Resultado por archivo: ✅ OK | ⚠️ Issues menores | 🔴 Issues críticos | 
 
 | # | Archivo | Líneas | Estado | Notas |
 |---|---------|--------|--------|-------|
-| 7  | `skills/forge-new.md` | 260 | ⏳ | Bootstrap. Evaluación de profundidad, fragmentación. |
-| 8  | `skills/forge-spike.md` | 285 | ⏳ | Exploración técnica opcional. |
-| 9  | `skills/forge-build-red.md` | 370 | ⏳ | Fase RED: genera todos los tests sin implementación. |
-| 10 | `skills/forge-build-green.md` | 257 | ⏳ | Fase GREEN: implementa AC por AC. |
-| 11 | `skills/forge-verify.md` | 406 | ⏳ | Validación post-build. 100% cobertura requerida. |
-| 12 | `skills/forge-close.md` | 296 | ⏳ | Archiving, knowledge extraction, reset de ciclo. |
-| 13 | `skills/forge-approve.md` | 391 | ⏳ | Aprobación de fases. Actualiza FORGE.md. |
-| 14 | `validation/assertions-verify.yaml` | 224 | ⏳ | Gates de VERIFY. Gap analysis, fidelidad. |
+| 7  | `skills/forge-new.md` | 260 | ✏️ | 2 fixes: R5 added; Phase 5 summary forge-memory/KNOWLEDGE.md. |
+| 8  | `skills/forge-spike.md` | 285 | ✏️ | 6 fixes: v0.7; R5 added; path .forge/; E053 split; forge_mem_search; Step 10.5 persist. |
+| 9  | `skills/forge-build-red.md` | 370 | ✏️ | 3 fixes: R5 added; B3 continuation marker; E204 SPEC-not-approved. |
+| 10 | `skills/forge-build-green.md` | 257 | ✏️ | 2 fixes: R5 added; E204 SPEC-not-approved. |
+| 11 | `skills/forge-verify.md` | 406 | ✏️ | 4 fixes: R5 added; E304 SPEC-not-found; V2 extracts TITULO+EVENTO_IDS; Step V7.5 persist. |
+| 12 | `skills/forge-close.md` | 296 | ✏️ | 2 fixes: R5 exception documented; bottom forge-memory section consolidated into K5. |
+| 13 | `skills/forge-approve.md` | 391 | ✏️ | 3 fixes: R5 added; TRACEABILITY.md write rule; VERIFY-03 §5→Section 8. |
+| 14 | `validation/assertions-verify.yaml` | 224 | ✏️ | 4 fixes: v0.7; P1-VERIFY-001 status; P2-VERIFY-001 description; P5-VERIFY-002 EVENTO_IDS exception. |
 
 ---
 
@@ -63,13 +63,13 @@ Resultado por archivo: ✅ OK | ⚠️ Issues menores | 🔴 Issues críticos | 
 
 | # | Archivo | Líneas | Estado | Notas |
 |---|---------|--------|--------|-------|
-| 15 | `skills/forge-status.md` | 212 | ⏳ | Consulta de estado activo. |
-| 16 | `skills/forge-validate.md` | 263 | ⏳ | Validación de precondiciones. |
-| 17 | `skills/forge-trace.md` | 219 | ⏳ | Mantiene TRACEABILITY.md. |
-| 18 | `skills/forge-ref.md` | 180 | ⏳ | Búsqueda en features cerradas. |
-| 19 | `skills/forge-orchestrator.md` | 258 | ⏳ | Coordinación de transiciones de fase. |
-| 20 | `validation/assertions-spike.yaml` | 49 | ⏳ | Gates de SPIKE. |
-| 21 | `validation/assertions-cross.yaml` | 75 | ⏳ | Gates genéricos (naming, metadata, no secrets). |
+| 15 | `skills/forge-status.md` | 212 | ✏️ | 4 fixes: path .forge/; R5 added; E700 path; Step 7.5 KNOWLEDGE.md section names updated. |
+| 16 | `skills/forge-validate.md` | 263 | ✏️ | 1 fix: R5 added. |
+| 17 | `skills/forge-trace.md` | 219 | ✏️ | 8 fixes: path .forge/; R5 added; §1→Section 3; §2→Section 7; §5→Section 8 (3 places + format table). |
+| 18 | `skills/forge-ref.md` | 180 | ✏️ | 4 fixes: path .forge/; R5 added; REF3 mem_search→forge_mem_search; mem_get_observation→forge_mem_get. |
+| 19 | `skills/forge-orchestrator.md` | 258 | ✅ | Sin issues. Paths y tool names correctos. |
+| 20 | `validation/assertions-spike.yaml` | 49 | ✏️ | 2 fixes: v0.7; IDs reformateados P1-SPIKE-/P2-SPIKE- con pillar structure. |
+| 21 | `validation/assertions-cross.yaml` | 75 | ✏️ | 2 fixes: v0.7; P1-CROSS-004 status Completo→"✅ Covered". |
 
 ---
 
@@ -77,13 +77,13 @@ Resultado por archivo: ✅ OK | ⚠️ Issues menores | 🔴 Issues críticos | 
 
 | # | Archivo | Líneas | Estado | Notas |
 |---|---------|--------|--------|-------|
-| 22 | `templates/SPEC.md` | 342 | ⏳ | Template de especificación. Core de cada ciclo. |
-| 23 | `templates/VERIFY.md` | 102 | ⏳ | Template de reporte de validación. |
-| 24 | `templates/TRACEABILITY.md` | 46 | ⏳ | Matriz AC → Test → Implementación. |
-| 25 | `templates/SPIKE.md` | 88 | ⏳ | Template de exploración técnica. |
+| 22 | `templates/SPEC.md` | 342 | ✏️ | 1 fix: DEC-N Referencia KNOWLEDGE.md# → forge-memory topic_key. |
+| 23 | `templates/VERIFY.md` | 102 | ✏️ | 2 fixes: path .forge/; ✅ Completo → ✅ Covered (all occurrences). |
+| 24 | `templates/TRACEABILITY.md` | 46 | ✅ | Sin issues. |
+| 25 | `templates/SPIKE.md` | 88 | ✅ | Sin issues. |
 | 26 | `templates/KNOWLEDGE.md` | 49 | ✅ | Rediseñado (thin index). Revisado en sprint anterior. |
-| 27 | `templates/INDEX.md` | 93 | ⏳ | Índice de features cerradas. |
-| 28 | `templates/VALIDATION.md` | 79 | ⏳ | Checklist de validación por fase. |
+| 27 | `templates/INDEX.md` | 93 | ✏️ | 1 fix: Forge version v0.3 → v0.7. |
+| 28 | `templates/VALIDATION.md` | 79 | ✅ | Sin issues. |
 
 ---
 
@@ -91,9 +91,9 @@ Resultado por archivo: ✅ OK | ⚠️ Issues menores | 🔴 Issues críticos | 
 
 | # | Archivo | Líneas | Estado | Notas |
 |---|---------|--------|--------|-------|
-| 29 | `stacks/android.md` | 119 | ⏳ | Stack Android: patrones, naming, test conventions. |
-| 30 | `stacks/kmp.md` | 109 | ⏳ | Stack KMP: shared/platform, test patterns. |
-| 31 | `stacks/TEMPLATE.md` | 51 | ⏳ | Template para nuevos stacks. |
+| 29 | `stacks/android.md` | 119 | ✅ | Sin issues. Sólido. |
+| 30 | `stacks/kmp.md` | 109 | ✅ | Sin issues. Sólido. |
+| 31 | `stacks/TEMPLATE.md` | 51 | ✅ | Sin issues. |
 
 ---
 
@@ -101,8 +101,8 @@ Resultado por archivo: ✅ OK | ⚠️ Issues menores | 🔴 Issues críticos | 
 
 | # | Archivo | Líneas | Estado | Notas |
 |---|---------|--------|--------|-------|
-| 32 | `forge-scan.sh` | 1,599 | ⏳ | Analizador legacy Android. Seguridad ya auditada (v2). |
-| 33 | `setup-project.sh` | 596 | ⏳ | Setup de proyecto. Seguridad ya auditada (v2). |
+| 32 | `forge-scan.sh` | 1,599 | ✅ | Seguridad auditada (commits previos). Contenido sólido. |
+| 33 | `setup-project.sh` | 596 | ✅ | Seguridad auditada (commits previos). Contenido sólido. |
 
 ---
 
@@ -110,12 +110,12 @@ Resultado por archivo: ✅ OK | ⚠️ Issues menores | 🔴 Issues críticos | 
 
 | # | Archivo | Líneas | Estado | Notas |
 |---|---------|--------|--------|-------|
-| 34 | `FORGE.md` | 194 | ⏳ | Estado vivo del proyecto. Leer como usuario. |
-| 35 | `config.yaml` | 80 | ⏳ | (mismo que #1 — revisar como doc de referencia) |
-| 36 | `PROJECT-STATUS.md` | 386 | ⏳ | Resumen ejecutivo del proyecto. ¿Está actualizado? |
-| 37 | `README.md` | 247 | ⏳ | Documentación pública. ¿Refleja v0.7? |
+| 34 | `FORGE.md` | 194 | ✏️ | 5 fixes: forge close description; SPEC.md v0.4→v0.7; assertions v0.4→v0.7 (4); R0-R4→R0-R5; forge-close annotation. |
+| 35 | `config.yaml` | 80 | ✅ | (revisado como #1) |
+| 36 | `PROJECT-STATUS.md` | 386 | ✏️ | 7 fixes: date; file annotations v0.4→v0.7; KNOWLEDGE.md thin index note; forge close description; v0.4 Feature #6 updated. |
+| 37 | `README.md` | 247 | ✏️ | 1 fix: forge close description → forge-memory canonical. |
 | 38 | `docs/index.html` | 953 | ✅ | Rediseñado en sprint anterior. |
-| 39 | `.gitignore` | 23 | ⏳ | Rápido. ¿Faltan exclusiones? |
+| 39 | `.gitignore` | 23 | ✅ | Sin issues. |
 
 ---
 
@@ -145,14 +145,14 @@ Para cada archivo la sesión de revisión sigue este formato:
 
 | Tier | Archivos | Revisados | Issues encontrados | Issues resueltos |
 |------|----------|-----------|-------------------|-----------------|
-| T1 — Núcleo | 6 | 0 | — | — |
-| T2 — Pipeline | 8 | 0 | — | — |
-| T3 — Utilidades | 7 | 0 | — | — |
-| T4 — Templates | 7 | 1 ✅ | — | — |
-| T5 — Stacks | 3 | 0 | — | — |
-| T6 — Scripts | 2 | 0 | — | — |
-| T7 — Docs | 6 | 1 ✅ | — | — |
-| **TOTAL** | **39** | **2** | — | — |
+| T1 — Núcleo | 6 | 6 ✅ | 19 | 19 |
+| T2 — Pipeline | 8 | 8 ✅ | 26 | 26 |
+| T3 — Utilidades | 7 | 7 ✅ | 21 | 21 |
+| T4 — Templates | 7 | 7 ✅ | 4 | 4 |
+| T5 — Stacks | 3 | 3 ✅ | 0 | 0 |
+| T6 — Scripts | 2 | 2 ✅ | 0 (seguridad ya auditada) | — |
+| T7 — Docs | 6 | 6 ✅ | 13 | 13 |
+| **TOTAL** | **39** | **39** | **83** | **83** |
 
 ---
 

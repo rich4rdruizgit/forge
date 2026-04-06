@@ -31,7 +31,7 @@ This skill is designed to run with fresh context. The orchestrator provides AC b
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -248,10 +248,10 @@ Violación de esta regla = BUILD inválido. El AC debe rehacerse desde RED.
 
 | Condition | Response |
 |-----------|----------|
-| SPEC not `✅ Aprobado` | Block. E200. |
+| SPEC not `✅ Aprobado` | Block. E204. |
 | BUILD already `✅ Aprobado` | Block. E201. Suggest `forge verify`. |
 | No active feature | Block. E202. Suggest `forge new`. |
 | Stack skill file not found | Block. E203. Output error with instructions to create it. |
-| SPEC.md not found | Block. E200 variant. |
+| SPEC.md not found | Block. E200. |
 | Implementation does not pass test in GREEN phase | Review implementation against SPEC. Fix implementation, NOT the test. If conflict with SPEC, use addendum protocol. |
 | Test appears to have genuine error in GREEN | STOP. Ask dev for permission to modify. Log as "Dev adjustment" in TRACEABILITY.md if approved. |

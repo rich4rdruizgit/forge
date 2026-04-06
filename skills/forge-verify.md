@@ -27,7 +27,7 @@ You are the **forge-verify agent**: given an approved SPEC and a completed BUILD
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -50,14 +50,14 @@ Record totals:
 - `total_addenda` = count of addenda (0 if none)
 
 If SPEC.md is not found:
-> 🚫 **E300** — No encontré `.forge/features/activo/{slug}/SPEC.md`. ¿La feature está activa?
+> 🚫 **E304** — No encontré `.forge/features/activo/{slug}/SPEC.md`. ¿La feature está activa?
 
 ---
 
 ## Step V2 — Read TRACEABILITY.md
 
 Read `.forge/features/activo/{slug}/TRACEABILITY.md`:
-- Extract the coverage matrix: AC_ID, TEST_IDS, TEST_FILES, IMPL_FILES, STATUS for each row
+- Extract the coverage matrix: AC_ID, AC_TITULO, EVENTO_IDS, TEST_IDS, TEST_FILES, IMPL_FILES, STATUS for each row
 - Extract addenda applied (if any)
 
 If TRACEABILITY.md is not found:
@@ -290,6 +290,29 @@ Omit the UI Coverage section entirely if the SPEC has no UI Contract. Omit the A
 
 ---
 
+## Step V7.5 — Persist VERIFY results to forge-memory
+
+After generating VERIFY.md, before presenting results to the dev:
+
+If `forge_memory_available`:
+Call `forge_mem_save` with:
+- title: `"VERIFY complete: {slug}"`
+- type: `"verify-result"`
+- topic_key: `"forge/{slug}/verify"`
+- content:
+  ```
+  ac_coverage: {covered}/{total_acs}
+  event_coverage: {covered}/{total_events}
+  ui_state_coverage: {covered}/{total_ui_states}
+  gaps_detected: {N}
+  gaps: [{type, id, description}] or []
+  weak_justifications: {N}
+  ci_pr_time_s: {estimated}
+  verdict: verified | gaps_found
+  ```
+
+---
+
 ## Step V8 — Present results to dev
 
 ### If gaps found:
@@ -350,8 +373,8 @@ Status in VERIFY.md: `✅ Verificado`
 | BUILD not `✅ Aprobado` | Block. E300. |
 | VERIFY already `✅ Aprobado` | Block. E301. Suggest `forge close`. |
 | No active feature | Block. E302. Suggest `forge new`. |
-| SPEC.md not found | Block. E300 variant. |
 | TRACEABILITY.md not found | Block. E303. Suggest running `forge build` first. |
+| SPEC.md not found | Block. E304. |
 | Test file referenced in TRACEABILITY.md does not exist | Report as gap in VERIFY.md. Do NOT block. |
 | Implementation file referenced in TRACEABILITY.md does not exist | Report as gap in VERIFY.md. Do NOT block. |
 

@@ -15,11 +15,11 @@ You are the Forge Trace Agent. Your job is to generate or update `TRACEABILITY.m
 
 ## Preconditions
 
-- `forge/FORGE.md` exists and is readable
+- `.forge/FORGE.md` exists and is readable
 - Feature activa exists (not null)
 - SPEC is `✅ Aprobado` (minimum — need ACs to trace)
 
-**E800**: "No encontré `forge/FORGE.md`. Este proyecto no está configurado para Forge."
+**E800**: "No encontré `.forge/FORGE.md`. Este proyecto no está configurado para Forge."
 **E801**: "No hay feature activa. Ejecutá `forge new` primero."
 **E802**: "El SPEC no está aprobado todavía. Necesito al menos los ACs del SPEC para trazar. Ejecutá `forge approve` en la fase SPEC primero."
 
@@ -29,7 +29,7 @@ You are the Forge Trace Agent. Your job is to generate or update `TRACEABILITY.m
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -38,12 +38,12 @@ You are the Forge Trace Agent. Your job is to generate or update `TRACEABILITY.m
 ### TR1 — Extract ACs from SPEC
 
 Read `.forge/features/activo/{slug}/SPEC.md`.
-Extract all acceptance criteria from §1 Requirements: `AC_ID` and `AC_TITULO`.
+Extract all acceptance criteria from Section 3 (Criterios de Aceptación): `AC_ID` and `AC_TITULO`.
 These are the root nodes of the traceability chain.
 
 ### TR2 — Extract Events from SPEC
 
-From the same SPEC.md, extract domain events from §2 Domain Model:
+From the same SPEC.md, extract domain events from Section 7 (Modelo de Dominio):
 - Extract the event mapping: which AC maps to which event IDs (EVT-N)
 - Store mapping: AC_ID → [EVENTO_IDS]
 
@@ -57,7 +57,7 @@ If TRACEABILITY.md does not exist yet: leave DOMAIN_TESTS and UI_TESTS columns e
 
 ### TR4 — Extract UI States from SPEC
 
-From SPEC.md §5 UI Contract:
+From SPEC.md Section 8 (Estados de UI):
 - Extract UI states/screens defined for each AC
 - Store mapping: AC_ID → [UI_STATES]
 
@@ -94,7 +94,7 @@ Rules:
 
 **Orphan tests**: Tests found in the codebase that are NOT linked to any AC.
 
-**Orphan UI states**: UI states defined in SPEC §5 UI Contract that are NOT linked to any AC or have no corresponding tests.
+**Orphan UI states**: UI states defined in SPEC Section 8 (Estados de UI) that are NOT linked to any AC or have no corresponding tests.
 
 ### TR8 — Generate summary
 
@@ -143,16 +143,16 @@ Output a concise summary:
 ## Gaps detectados
 
 ### Eventos huérfanos (sin AC)
-| Evento | Definido en SPEC §2 | AC asociado |
-|--------|---------------------|-------------|
+| Evento | Definido en SPEC §7 (Modelo de Dominio) | AC asociado |
+|--------|----------------------------------------|-------------|
 
 ### Tests huérfanos (sin AC)
 | Test | Tipo (domain/UI) | AC asociado |
 |------|-------------------|-------------|
 
 ### UI States huérfanos (sin test)
-| UI State | Definido en SPEC §5 | AC asociado | Tiene test |
-|----------|---------------------|-------------|-----------|
+| UI State | Definido en SPEC §8 (Estados de UI) | AC asociado | Tiene test |
+|----------|-------------------------------------|-------------|-----------|
 
 ### ACs sin cobertura completa
 | AC_ID | Tiene evento | Tiene UI state | Tiene domain test | Tiene UI test | Tiene impl |

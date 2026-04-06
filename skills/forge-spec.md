@@ -25,7 +25,7 @@ The 5 Pillars:
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -138,7 +138,7 @@ Para cada AC:
 
 **MEDIA + PROFUNDA only.** Skip for LIGERA (document skip reason).
 
-1. Check KNOWLEDGE.md patterns against proposed approach
+1. Check forge-memory patterns against proposed approach (fallback: KNOWLEDGE.md thin index)
    - If dev wants to deviate → must document reason in Decisiones Técnicas (section 10)
 2. Check existing code to reuse
    - Section 5a (Componentes a Reutilizar) CANNOT be empty without justification
@@ -162,7 +162,7 @@ Fill sections according to `profundidad`:
 | 1 | User Story (verbatim del ticket) | ✅ | ✅ | ✅ |
 | 2 | Profundidad y Justificación | ✅ | ✅ | ✅ |
 | 3 | Criterios de Aceptación (GWT) | ✅ | ✅ | ✅ |
-| 4 | Casos Borde (mín 2) | ✅ | ✅ | ✅ |
+| 4 | Casos Borde (mín per config: LIGERA=0, MEDIA=1, PROFUNDA=2) | ✅ | ✅ | ✅ |
 | 5a | Componentes a Reutilizar | ✅ | ✅ | ✅ |
 | 5b | Componentes Nuevos | ✅ | ✅ | ✅ |
 | 6 | Definition of Done | ✅ | ✅ | ✅ |
@@ -248,7 +248,7 @@ Total: X/10. Minimum threshold: **7/10** (configurable via `spec_score_minimo` i
 
 | Score | Criterio |
 |-------|----------|
-| 2 | Patrones de KNOWLEDGE.md referenciados y seguidos (o desviación justificada). **Si KNOWLEDGE.md vacío → 2/2 automático** |
+| 2 | Patrones de forge-memory (o KNOWLEDGE.md en fallback) referenciados y seguidos (o desviación justificada). **Si no hay patrones previos → 2/2 automático** |
 | 1 | Ignora patrones existentes sin justificación |
 | 0 | Contradice patrones establecidos |
 
@@ -318,7 +318,7 @@ After generating SPEC.md:
 
 1. **NEVER** invent ACs — ask the dev, always
 2. **NEVER** invent technical decisions — present options, dev decides
-3. **NEVER** ignore established patterns from KNOWLEDGE.md
+3. **NEVER** ignore established patterns from forge-memory (or KNOWLEDGE.md in fallback)
 4. **NEVER** accept AC describing implementation (reject with explanation)
 5. **NEVER** continue with vague AC — reject and explain what's vague
 6. **NEVER** generate complete SPEC at once — build incrementally in conversation
@@ -326,7 +326,7 @@ After generating SPEC.md:
 8. **ALWAYS** verify integration: what exists to reuse (Step 4)
 9. **ALWAYS** ask challenge questions (min 1/3/5 by depth)
 10. **ALWAYS** compute Quality Score with the exact rubric above
-11. **ALWAYS** present context from KNOWLEDGE.md BEFORE any questions (Step 1 is a gate)
+11. **ALWAYS** present context from forge-memory (or KNOWLEDGE.md in fallback) BEFORE any questions (Step 1 is a gate)
 12. **ALWAYS** load stack skill before generating architecture sections
 13. **ALWAYS** one question at a time — wait for response before continuing
 14. **ALWAYS** format ACs as Dado/Cuando/Entonces (Given/When/Then if `lenguaje=en`)

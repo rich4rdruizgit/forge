@@ -36,7 +36,7 @@ Before executing anything, verify ALL of these:
 
 ## Forge Runtime
 
-→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic.
+→ Execute `_shared/forge-runtime.md` steps R0–R4 before any skill-specific logic. Execute R5 after all skill-specific logic is complete.
 
 ---
 
@@ -314,7 +314,7 @@ These are used ONLY when `.forge/validation/assertions-{phase}.yaml` does not ex
 |----|-------------|-------------|
 | VERIFY-01 | Todos los ACs verificados | Each AC from SPEC.md has a verification entry with pass/fail status |
 | VERIFY-02 | Tests de integración ejecutados | Integration or E2E test results documented with pass/fail counts |
-| VERIFY-03 | UI states verificados | Each UI state from SPEC.md §5 has been manually or automatically verified |
+| VERIFY-03 | UI states verificados | Each UI state from SPEC.md Section 8 (Estados de UI) has been manually or automatically verified |
 | VERIFY-04 | Criterios de aceptación cumplidos | All ACs marked as passing with evidence (screenshots, logs, test output) |
 
 ---
@@ -322,7 +322,7 @@ These are used ONLY when `.forge/validation/assertions-{phase}.yaml` does not ex
 ## Rules
 
 - **NEVER write `✅ Aprobado` if ANY blocker assertion fails** — even one failed blocker blocks approval completely. Warnings do NOT block.
-- **NEVER modify artifact files** — this skill writes ONLY to FORGE.md and VALIDATION-{PHASE}.md. SPIKE.md, SPEC.md, VERIFY.md are never touched by this skill.
+- **NEVER modify artifact files** — this skill writes ONLY to FORGE.md, VALIDATION-{PHASE}.md, and TRACEABILITY.md (cross-phase results, Write 4 only). SPIKE.md, SPEC.md, VERIFY.md are never touched by this skill.
 - **ALWAYS run ALL assertions before deciding** — never stop at the first failure. The developer needs to see every gap in a single pass.
 - **ALWAYS show evidence for each assertion** — not just pass/fail. Show what text from the artifact satisfied the assertion, or "No se encontró evidencia" if it failed.
 - **ALWAYS generate VALIDATION-{PHASE}.md** — regardless of whether approval succeeds or fails.
