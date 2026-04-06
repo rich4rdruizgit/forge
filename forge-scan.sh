@@ -305,17 +305,17 @@ detect_sdk_versions() {
 
     # Classic format: compileSdk = 34 / compileSdk(34) / compileSdkVersion 34
     if [[ -z "$COMPILE_SDK" ]]; then
-        COMPILE_SDK=$(echo "$all_gradle_files" | xargs rg '(compileSdk|compileSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
+        COMPILE_SDK=$(tr '\n' '\0' <<< "$all_gradle_files" | xargs -0 rg '(compileSdk|compileSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
     fi
     # New format (Android 16+): compileSdk { version = release(36) { ... } }
     if [[ -z "$COMPILE_SDK" ]]; then
-        COMPILE_SDK=$(echo "$all_gradle_files" | xargs rg 'release\(([0-9]+)\)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*release\(([0-9]+)\).*/\1/' || true)
+        COMPILE_SDK=$(tr '\n' '\0' <<< "$all_gradle_files" | xargs -0 rg 'release\(([0-9]+)\)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*release\(([0-9]+)\).*/\1/' || true)
     fi
     if [[ -z "$MIN_SDK" ]]; then
-        MIN_SDK=$(echo "$all_gradle_files" | xargs rg '(minSdk|minSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
+        MIN_SDK=$(tr '\n' '\0' <<< "$all_gradle_files" | xargs -0 rg '(minSdk|minSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
     fi
     if [[ -z "$TARGET_SDK" ]]; then
-        TARGET_SDK=$(echo "$all_gradle_files" | xargs rg '(targetSdk|targetSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
+        TARGET_SDK=$(tr '\n' '\0' <<< "$all_gradle_files" | xargs -0 rg '(targetSdk|targetSdkVersion)\s*[=( ]\s*([0-9]+)' -o --no-filename 2>/dev/null | head -1 | sed -E 's/.*[=( ]+\s*([0-9]+).*/\1/' || true)
     fi
 
     [[ -n "$COMPILE_SDK" ]] && info "compileSdk: $COMPILE_SDK" || true
@@ -444,10 +444,10 @@ detect_ksp_kapt() {
     gradle_files=$(sfd -e gradle -e kts --max-depth 3 -t f 2>/dev/null)
     [[ -z "$gradle_files" ]] && return
 
-    if echo "$gradle_files" | xargs rg -q '\bksp\b' 2>/dev/null; then
+    if tr '\n' '\0' <<< "$gradle_files" | xargs -0 rg -q '\bksp\b' 2>/dev/null; then
         HAS_KSP=true
     fi
-    if echo "$gradle_files" | xargs rg -q '\bkapt\b' 2>/dev/null; then
+    if tr '\n' '\0' <<< "$gradle_files" | xargs -0 rg -q '\bkapt\b' 2>/dev/null; then
         HAS_KAPT=true
     fi
 
@@ -610,7 +610,7 @@ scan_module() {
     local kotlin_files
     kotlin_files=$(sfd -e kt -t f . "$mod_path/src" 2>/dev/null)
     if [[ -n "$kotlin_files" ]]; then
-        loc=$(echo "$kotlin_files" | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}')
+        loc=$(tr '\n' '\0' <<< "$kotlin_files" | xargs -0 wc -l 2>/dev/null | tail -1 | awk '{print $1}')
     fi
     kv_set "mod_meta" "$mod/loc" "$loc"
     TOTAL_LOC=$((TOTAL_LOC + loc))
